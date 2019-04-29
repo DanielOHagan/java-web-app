@@ -7,18 +7,18 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
-<head>
-    <title>${username}</title>
-</head>
+    <head>
+        <title>${username}</title>
+    </head>
     <body>
-        <nav>
-            <ul>
-                <li>
-                    <a href="${pageContext.request.contextPath}/index.jsp">
-                        Home
-                    </a>
-                </li>
-            </ul>
-        </nav>
+    <nav>
+        <ul>
+            <li>
+                <a href="${pageContext.request.contextPath}/index.jsp">
+                    Home
+                </a>
+            </li>
+        </ul>
+    </nav>
     </body>
 </html>

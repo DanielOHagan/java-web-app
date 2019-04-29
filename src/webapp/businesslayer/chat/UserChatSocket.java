@@ -1,4 +1,4 @@
-package webapp.sockets;
+package webapp.businesslayer.chat;
 
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
@@ -6,16 +6,11 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.server.ServerEndpoint;
 
-@ServerEndpoint("/testsocket")
-public class TestSocket {
+@ServerEndpoint("/userchatsocket")
+public class UserChatSocket {
 
     @OnOpen
     public void onOpen() {
-
-    }
-
-    @OnClose
-    public void onClose() {
 
     }
 
@@ -28,6 +23,11 @@ public class TestSocket {
 
     @OnError
     public void onError(Throwable throwable) {
+
+    }
+
+    @OnClose
+    public void onClose() {
 
     }
 }

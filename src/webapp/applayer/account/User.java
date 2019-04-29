@@ -2,8 +2,6 @@ package webapp.applayer.account;
 
 public class User {
 
-    /* Simple POJO class to store data from the database that will be displayed to the user */
-
     private final int mId;
     private final String mEmail;
 

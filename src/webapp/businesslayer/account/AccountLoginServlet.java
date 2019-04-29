@@ -1,4 +1,4 @@
-package webapp.servlets.account;
+package webapp.businesslayer.account;
 
 import webapp.applayer.account.User;
 import webapp.datalayer.account.DatabaseUser;
@@ -6,13 +6,12 @@ import webapp.error.ErrorType;
 import webapp.error.IErrorType;
 
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet(name = "AccountLoginServlet")
+
 public class AccountLoginServlet extends HttpServlet {
 
     /**
@@ -38,6 +37,7 @@ public class AccountLoginServlet extends HttpServlet {
     public static final String REQUEST_ATTRIBUTE_ERROR_MESSAGE = "errorMessage";
     public static final String REQUEST_ATTRIBUTE_USERNAME = "username";
     public static final String REQUEST_ATTRIBUTE_EMAIL = "email";
+    public static final String REQUEST_ATTRIBUTE_USER_ID = "userId";
 
     /**
      *
@@ -82,5 +82,6 @@ public class AccountLoginServlet extends HttpServlet {
     private void setRequestAttributes(HttpServletRequest request, User user) {
         request.setAttribute(REQUEST_ATTRIBUTE_USERNAME, user.getUsername());
         request.setAttribute(REQUEST_ATTRIBUTE_EMAIL, user.getEmail());
+        request.setAttribute(REQUEST_ATTRIBUTE_USER_ID, user.getId());
     }
 }

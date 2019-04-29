@@ -7,11 +7,11 @@
     <!-- SERVLET LIST -->
     <servlet>
         <servlet-name>AccountLoginServlet</servlet-name>
-        <servlet-class>webapp.servlets.account.AccountLoginServlet</servlet-class>
+        <servlet-class>webapp.businesslayer.account.AccountLoginServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>AccountLogoutServlet</servlet-name>
-        <servlet-class>webapp.servlets.account.AccountLogoutServlet</servlet-class>
+        <servlet-class>webapp.businesslayer.account.AccountLogoutServlet</servlet-class>
     </servlet>
 
     <!-- SERVLET MAPPING -->
