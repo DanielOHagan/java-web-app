@@ -1,14 +1,7 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: Daniel
-  Date: 24/04/2019
-  Time: 00:00
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
-    <title>Login Page</title>
+    <title>LOGIN</title>
 </head>
     <body>
         <form name="loginForm" id="loginForm" action="${pageContext.request.contextPath}/account/login" method="post">

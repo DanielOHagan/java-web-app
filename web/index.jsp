@@ -1,18 +1,39 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: Daniel
-  Date: 07/04/2019
-  Time: 23:50
-  To change this template use File | Settings | File Templates.
---%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
 <html>
     <head>
-        <title>Home Page</title>
+        <title>HOME</title>
     </head>
     <body>
-        <a href="${pageContext.request.contextPath}/login.jsp">
-            Login Page
-        </a>
+        <nav>
+            <ul>
+                <c:choose>
+                    <c:when test="${sessionScope.loggedIn.equals(\"true\")}">
+                        <jsp:useBean id="currentUser" scope="session" type="com.danielohagan.webapp.businesslayer.entities.account.User"/>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/account/profile?id=${currentUser.id}">
+                                Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/account/logout">
+                                Log Out
+                            </a>
+                        </li>
+                    </c:when>
+                    <c:otherwise>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/account/login">
+                                Login
+                            </a>
+                        </li>
+                    </c:otherwise>
+                </c:choose>
+            </ul>
+        </nav>
+        <main>
+
+        </main>
     </body>
 </html>

@@ -4,23 +4,7 @@
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
          version="4.0">
 
-    <!-- SERVLET LIST -->
-    <servlet>
-        <servlet-name>AccountLoginServlet</servlet-name>
-        <servlet-class>webapp.businesslayer.account.AccountLoginServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>AccountLogoutServlet</servlet-name>
-        <servlet-class>webapp.businesslayer.account.AccountLogoutServlet</servlet-class>
-    </servlet>
-
-    <!-- SERVLET MAPPING -->
-    <servlet-mapping>
-        <servlet-name>AccountLoginServlet</servlet-name>
-        <url-pattern>/account/login</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AccountLogoutServlet</servlet-name>
-        <url-pattern>/account/logout</url-pattern>
-    </servlet-mapping>
+    <welcome-file-list>
+        <welcome-file>home</welcome-file>
+    </welcome-file-list>
 </web-app>
