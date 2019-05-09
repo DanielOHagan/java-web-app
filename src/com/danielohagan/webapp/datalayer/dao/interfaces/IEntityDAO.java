@@ -6,8 +6,4 @@ public interface IEntityDAO<T extends IEntity> {
 
     T getById(int id);
 
-    void store(T entity);
-    void update(T entity);
-    void delete(T entity);
-
 }

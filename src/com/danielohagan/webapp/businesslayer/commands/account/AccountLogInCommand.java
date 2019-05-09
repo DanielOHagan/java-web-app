@@ -16,22 +16,8 @@ import java.io.IOException;
 
 public class AccountLogInCommand extends AbstractCommand {
 
-    /*
-     * HTML_FORM_USERNAME
-     *  The name of the HTML form tag
-     *
-     * HTML_FORM_PASSWORD
-     *  The name of the HTML form tag
-     */
     private static final String HTML_FORM_EMAIL = "loginFormEmail";
     private static final String HTML_FORM_PASSWORD = "loginFormPassword";
-
-    /*
-    TODO:: Check if the inputs are correct
-     If so then log the user in
-     Start the user session
-     Then redirect the user
-     */
 
     @Override
     public void execute(
@@ -55,7 +41,6 @@ public class AccountLogInCommand extends AbstractCommand {
         try {
             if (errorType == ErrorType.NO_ERROR) {
 
-//                setRequestAttributes(request, user);
                 SessionManager.setSessionUserAttributes(httpSession, user);
 
                 request.getRequestDispatcher(JSPFileMap.HOME_PAGE)
@@ -77,15 +62,5 @@ public class AccountLogInCommand extends AbstractCommand {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void setRequestAttributes(
-            HttpServletRequest request,
-            User user
-    ) {
-        request.setAttribute(
-                REQUEST_ATTRIBUTE_LOGGED_IN,
-                user != null ? REQUEST_TRUE : REQUEST_FALSE
-        );
     }
 }

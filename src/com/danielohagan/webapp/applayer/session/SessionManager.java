@@ -34,6 +34,7 @@ public class SessionManager {
     }
 
     public static void logOutUser(HttpSession httpSession) {
+        httpSession.setAttribute(LOGGED_IN, FALSE);
         httpSession.removeAttribute(ATTRIBUTE_USER);
     }
 }

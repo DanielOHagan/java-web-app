@@ -22,8 +22,8 @@
         <label for="registerFormPasswordConfirm">Confirm Password:</label>
         <input type="password" name="registerFormPasswordConfirm" id="registerFormPasswordConfirm" width="32" />
 
-
-        <button type="submit" form="registerForm" value="register">LOGIN</button>
+        <br />
+        <button type="submit" form="registerForm" value="register">REGISTER</button>
     </form>
 
     <p class="form-error">${errorMessage}</p>

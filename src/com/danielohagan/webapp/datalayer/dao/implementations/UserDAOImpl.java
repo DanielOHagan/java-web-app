@@ -51,60 +51,17 @@ public class UserDAOImpl implements IUserDAO {
                         System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
                         System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
                 );
-        String sqlStatement;
-        ResultSet resultSet;
 
         //Get the username corresponding to account_THINKTHISSHOULDGO with the given email and password
         if (connection != null) {
-            try(Statement statement = connection.createStatement()) {
-
-                sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                        " WHERE " + ID_COLUMN_NAME + " = \"" + id +
-                        "\";";
-
-                resultSet = statement.executeQuery(sqlStatement);
-
-                //Extract the username from the result set
-                if (resultSet.next()) {
-                    user = new User(
-                            id,
-                            resultSet.getString(EMAIL_COLUMN_NAME),
-                            resultSet.getString(USERNAME_COLUMN_NAME)
-                    );
-                }
-
-                //Clean Up
-                resultSet.close();
-                statement.close();
-                connection.close();
-
-            } catch (Exception e) {
+            try {
+                user = getUser(connection, id);
+            } catch (SQLException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    connection.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             }
         }
 
         return user;
-    }
-
-    @Override
-    public void store(User user) {
-
-    }
-
-    @Override
-    public void update(User entity) {
-
-    }
-
-    @Override
-    public void delete(User entity) {
-
     }
 
     @Override
@@ -115,35 +72,13 @@ public class UserDAOImpl implements IUserDAO {
                         System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
                         System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
                 );
-        String sqlStatement;
-        ResultSet resultSet;
 
         //Get the username corresponding to account with the given email and password
         if (connection != null) {
-            try(Statement statement = connection.createStatement()) {
-
-                sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                        " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
-                        "\" AND " + PASSWORD_COLUMN_NAME + " = \"" + password +
-                        "\";";
-
-                resultSet = statement.executeQuery(sqlStatement);
-
-                user = generateUser(resultSet);
-
-                //Clean Up
-                resultSet.close();
-                statement.close();
-                connection.close();
-
-            } catch (Exception e) {
+            try {
+                user = getUser(connection, email, password);
+            } catch (SQLException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    connection.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             }
         }
 
@@ -151,17 +86,52 @@ public class UserDAOImpl implements IUserDAO {
     }
 
     @Override
-    public void updateEmail(User user, String email) {
+    public void updateEmail(int id, String email) {
 
     }
 
     @Override
-    public void updatePassword(User user, String password) {
+    public void updatePassword(int id, String newPassword) {
 
     }
 
     @Override
-    public void updateUsername(User user, String username) {
+    public void updateUsername(int id, String username) {
+
+    }
+
+    @Override
+    public void updateUser(int id, User user) {
+
+    }
+
+    @Override
+    public void createNewUser(User user, String password) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection(
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
+                );
+        String sqlStatement;
+
+        if (connection != null) {
+            try(Statement statement = connection.createStatement()) {
+
+                sqlStatement = "INSERT INTO " + ACCOUNT_TABLE_NAME + " (" +
+                        EMAIL_COLUMN_NAME + ", " + USERNAME_COLUMN_NAME + ", " +
+                        PASSWORD_COLUMN_NAME + ")" +
+                        " VALUES ('" + user.getEmail() + "', '" + user.getUsername() +
+                        "', '" + password + "');";
+
+                statement.execute(sqlStatement);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void deleteUser(int id) {
 
     }
 
@@ -179,35 +149,13 @@ public class UserDAOImpl implements IUserDAO {
                         System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
                         System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
                 );
-        String sqlStatement;
-        ResultSet resultSet;
 
         //Get the username corresponding to account with the given email and password
         if (connection != null) {
-            try(Statement statement = connection.createStatement()) {
-
-                sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                        " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
-                        "\";";
-
-                resultSet = statement.executeQuery(sqlStatement);
-
-                //Extract the username from the result set
-                user = generateUser(resultSet);
-
-                //Clean Up
-                resultSet.close();
-                statement.close();
-                connection.close();
-
-            } catch (Exception e) {
+            try {
+                user = getUser(connection, email);
+            } catch (SQLException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    connection.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             }
         }
 
@@ -268,6 +216,160 @@ public class UserDAOImpl implements IUserDAO {
         return accountExists;
     }
 
+    private boolean isEmailTaken(String email) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection(
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
+                );
+        String sqlStatement;
+        ResultSet resultSet;
+        boolean accountExists = false;
+
+        //Get the username corresponding to account with the given email and password
+        if (connection != null) {
+            try(Statement statement = connection.createStatement()) {
+
+                sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
+                        " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
+                        "\";";
+
+                resultSet = statement.executeQuery(sqlStatement);
+
+                //Check if the result set contains any data,
+                //if so then an account with the corresponding inputs exists
+                if (resultSet.next()) {
+                    accountExists = true;
+                }
+
+                //Clean Up
+                resultSet.close();
+                statement.close();
+                connection.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    connection.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return accountExists;
+    }
+
+    private boolean isUsernameTaken(String username) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection(
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
+                );
+        String sqlStatement;
+        ResultSet resultSet;
+        boolean accountExists = false;
+
+        //Get the username corresponding to account with the given email and password
+        if (connection != null) {
+            try(Statement statement = connection.createStatement()) {
+
+                sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
+                        " WHERE " + USERNAME_COLUMN_NAME + " = \"" + username +
+                        "\";";
+
+                resultSet = statement.executeQuery(sqlStatement);
+
+                //Check if the result set contains any data,
+                //if so then an account with the corresponding inputs exists
+                if (resultSet.next()) {
+                    accountExists = true;
+                }
+
+                //Clean Up
+                resultSet.close();
+                statement.close();
+                connection.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    connection.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return accountExists;
+    }
+
+    private User getUser(Connection connection, String email, String password) throws SQLException {
+        User user = null;
+
+        try(Statement statement = connection.createStatement()) {
+            String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
+                    " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
+                    "\" AND " + PASSWORD_COLUMN_NAME + " = \"" + password +
+                    "\";";
+
+            ResultSet resultSet = statement.executeQuery(sqlStatement);
+
+            user = generateUser(resultSet);
+
+            //Clean Up
+            resultSet.close();
+            statement.close();
+            connection.close();
+        }
+
+        return user;
+    }
+
+    private User getUser(Connection connection, int id) throws SQLException {
+        User user = null;
+
+        try(Statement statement = connection.createStatement()) {
+            String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
+                    " WHERE " + ID_COLUMN_NAME + " = \"" + id +
+                    "\";";
+
+            ResultSet resultSet = statement.executeQuery(sqlStatement);
+
+            user = generateUser(resultSet);
+
+            //Clean Up
+            resultSet.close();
+            statement.close();
+            connection.close();
+        }
+
+        return user;
+    }
+
+    private User getUser(Connection connection, String email) throws SQLException {
+        User user = null;
+
+        try(Statement statement = connection.createStatement()) {
+            String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
+                    " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
+                    "\";";
+
+            ResultSet resultSet = statement.executeQuery(sqlStatement);
+
+            user = generateUser(resultSet);
+
+            //Clean Up
+            resultSet.close();
+            statement.close();
+            connection.close();
+        }
+
+        return user;
+    }
+
     private User generateUser(ResultSet resultSet) {
         User user = null;
 
@@ -303,18 +405,55 @@ public class UserDAOImpl implements IUserDAO {
 
         //Check if the inputs are valid
         if (
-                (errorType = inputsGetErrorType(email, password))
+                (errorType = getEmailPasswordErrorType(email, password))
                         != ErrorType.NO_ERROR
         ) {
             return errorType;
         }
 
-        //Check if the inputs correspond to an account_THINKTHISSHOULDGO on the database
+        //Check if the inputs correspond to an account on the database
         if (
                 (errorType = getAccountConnectionErrorType(email, password))
                         != ErrorType.NO_ERROR
         ) {
             return errorType;
+        }
+
+        return ErrorType.NO_ERROR;
+    }
+
+    public IErrorType userRegisterGetErrorType(
+            String username,
+            String email,
+            String emailConfirm,
+            String password,
+            String passwordConfirm
+    ) {
+        IErrorType errorType;
+
+        //Check if the email, emailConfirm, password and passwordConfirm are valid inputs
+        errorType = emailPasswordConfirmationGetErrorType(
+                email,
+                emailConfirm,
+                password,
+                passwordConfirm
+        );
+        if (errorType != ErrorType.NO_ERROR) {
+            return errorType;
+        }
+
+        //Check if username is a valid input
+        errorType = getUsernameErrorType(username);
+        if (errorType != ErrorType.NO_ERROR) {
+            return errorType;
+        }
+
+        if (isEmailTaken(email)) {
+            return AccountErrorType.CREATION_EMAIL_TAKEN;
+        }
+
+        if (isUsernameTaken(username)) {
+            return AccountErrorType.CREATION_USERNAME_TAKEN;
         }
 
         return ErrorType.NO_ERROR;
@@ -329,7 +468,7 @@ public class UserDAOImpl implements IUserDAO {
      * @return If no errors then returns ErrorType.NO_ERROR,
      *  else it returns a specific error as to why the request failed
      */
-    private IErrorType inputsGetErrorType(String email, String password) {
+    private IErrorType getEmailPasswordErrorType(String email, String password) {
 
         if (email == null || email.isEmpty()) {
             return AccountErrorType.INPUT_EMAIL_EMPTY;
@@ -353,6 +492,59 @@ public class UserDAOImpl implements IUserDAO {
 
         if (password.length() < PASSWORD_MIN_LENGTH) {
             return AccountErrorType.INPUT_PASSWORD_TOO_SHORT;
+        }
+
+        //TODO:: Check for invalid characters
+
+        return ErrorType.NO_ERROR;
+    }
+
+    private IErrorType getUsernameErrorType(String username) {
+
+        if (username == null || username.isEmpty()) {
+            return AccountErrorType.INPUT_USERNAME_EMPTY;
+        }
+
+        if (username.length() > USERNAME_MAX_LENGTH) {
+            return AccountErrorType.INPUT_USERNAME_TOO_LONG;
+        }
+
+        if (username.length() < USERNAME_MIN_LENGTH) {
+            return AccountErrorType.INPUT_USERNAME_TOO_SHORT;
+        }
+
+        //TODO:: Check for invalid characters
+
+        return ErrorType.NO_ERROR;
+    }
+
+    private IErrorType emailPasswordConfirmationGetErrorType(
+            String email,
+            String emailConfirm,
+            String password,
+            String passwordConfirm
+    ) {
+        IErrorType errorType;
+
+        //Check the Email and Password are valid inputs
+        errorType = getEmailPasswordErrorType(email, password);
+        if (errorType != ErrorType.NO_ERROR) {
+            return errorType;
+        }
+
+        //Check the Email and Password confirmations are valid inputs
+        errorType = getEmailPasswordErrorType(emailConfirm, passwordConfirm);
+        if (errorType != ErrorType.NO_ERROR) {
+            return errorType;
+        }
+
+        //Check the email and password are the same as the confirmation inputs
+        if (!email.equals(emailConfirm)) {
+            return AccountErrorType.INPUT_EMAIL_MISMATCH;
+        }
+
+        if (!password.equals(passwordConfirm)) {
+            return AccountErrorType.INPUT_PASSWORD_MISMATCH;
         }
 
         return ErrorType.NO_ERROR;

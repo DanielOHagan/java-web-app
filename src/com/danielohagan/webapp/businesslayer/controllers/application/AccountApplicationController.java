@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 
 public class AccountApplicationController extends AbstractApplicationController {
 
@@ -38,7 +37,6 @@ public class AccountApplicationController extends AbstractApplicationController 
     private HttpServletResponse mResponse;
     private UserDAOImpl mUserDAO;
     private String mKey;
-    private Map<String, String> mUrlParamterMap;
 
     public AccountApplicationController(
             HttpServletRequest request,
@@ -59,7 +57,6 @@ public class AccountApplicationController extends AbstractApplicationController 
         mCommandMap.put(LOG_OUT_KEY, AccountLogOutCommand.class);
         mCommandMap.put(REGISTER_KEY, AccountRegisterCommand.class);
 
-        mUrlParamterMap = new HashMap<>();
         mUserDAO = new UserDAOImpl();
     }
 
@@ -111,7 +108,46 @@ public class AccountApplicationController extends AbstractApplicationController 
         }
 
         try {
-            forward();
+            switch (mKey) {
+                case PROFILE_KEY:
+
+                    setProfilePageAttribs();
+
+                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_PROFILE_PAGE)
+                            .forward(mRequest, mResponse);
+                    break;
+                case LOG_IN_KEY:
+
+                    //Forward the user to Home if they are already logged in
+                    // (They shouldn't be given a link to the login page if they are already logged in)
+
+                    if (SessionManager.isLoggedIn(mRequest.getSession())) {
+                        mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                                .forward(mRequest, mResponse);
+                    } else {
+                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
+                                .forward(mRequest, mResponse);
+                    }
+                    break;
+                case LOG_OUT_KEY:
+                    //Log out the user if key is LOG_OUT and user is logged in
+                    if (SessionManager.isLoggedIn(mRequest.getSession())) {
+                        AccountLogOutCommand command = new AccountLogOutCommand();
+                        command.execute(mRequest, mResponse);
+                    }
+
+                    mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                            .forward(mRequest, mResponse);
+                    break;
+                case REGISTER_KEY:
+                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_PAGE)
+                            .forward(mRequest, mResponse);
+                    break;
+                default:
+                    mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                            .forward(mRequest, mResponse);
+                    break;
+            }
         } catch (ServletException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -157,40 +193,5 @@ public class AccountApplicationController extends AbstractApplicationController 
                 REQUEST_ATTRIB_PROFILE_USER,
                 mUserDAO.getById(userId)
         );
-    }
-
-    private void forward() throws ServletException, IOException {
-        setAttributes();
-
-        switch (mKey) {
-            case PROFILE_KEY:
-
-                setProfilePageAttribs();
-
-                mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_PROFILE_PAGE)
-                        .forward(mRequest, mResponse);
-                break;
-            case LOG_IN_KEY:
-
-                //Forward the user to Home if they are already logged in
-                // (They shouldn't be given a link to the login page if they are already logged in)
-
-                if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                    mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
-                            .forward(mRequest, mResponse);
-                } else {
-                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
-                            .forward(mRequest, mResponse);
-                }
-                break;
-            case REGISTER_KEY:
-                mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_PAGE)
-                        .forward(mRequest, mResponse);
-                break;
-            default:
-                mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
-                        .forward(mRequest, mResponse);
-                break;
-        }
     }
 }

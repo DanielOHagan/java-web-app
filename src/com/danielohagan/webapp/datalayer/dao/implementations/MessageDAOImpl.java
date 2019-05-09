@@ -10,18 +10,5 @@ public class MessageDAOImpl implements IMessageDAO {
         return null;
     }
 
-    @Override
-    public void store(Message message) {
 
-    }
-
-    @Override
-    public void update(Message entity) {
-
-    }
-
-    @Override
-    public void delete(Message entity) {
-
-    }
 }

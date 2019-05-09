@@ -15,8 +15,10 @@ public enum AccountErrorType implements IErrorType {
 
 
     /* ACCOUNT CREATION ERRORS */
+    CREATION_FAILED("Account creation has failed", false),
     /* ACCOUNT CREATION EMAIL ERRORS */
     CREATION_EMAIL_TAKEN("Failed to create account: Email taken", false),
+
 
     /* ACCOUNT CREATION USERNAME ERRORS */
     CREATION_USERNAME_TAKEN("Failed to create account: Username taken", false),
@@ -42,6 +44,7 @@ public enum AccountErrorType implements IErrorType {
             " characters",
             false
     ),
+    INPUT_EMAIL_MISMATCH("The input Email addresses do not match", false),
 
     /* USER INPUT USERNAME ERRORS*/
     INPUT_USERNAME_EMPTY("The username input field was empty", false),
@@ -78,7 +81,7 @@ public enum AccountErrorType implements IErrorType {
                     " can not be used is the password",
             false
     ),
-
+    INPUT_PASSWORD_MISMATCH("The input passwords do not match", false),
 
 
     /* ACCOUNT LOGIN ERRORS */

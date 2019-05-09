@@ -28,6 +28,11 @@
                                 Login
                             </a>
                         </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/account/register">
+                                Register
+                            </a>
+                        </li>
                     </c:otherwise>
                 </c:choose>
             </ul>

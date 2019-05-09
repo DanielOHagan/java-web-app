@@ -11,12 +11,8 @@ public abstract class AbstractCommand {
     /*
      * REQUEST_ATTRIBUTE_ERROR_MESSAGE
      *  The attribute tag used to store the error message
-     *
-     * REQUEST_ATTRIBUTE_LOGGED_IN
-     *  The attribute tag used to store the account's username
      */
     protected static final String REQUEST_ATTRIBUTE_ERROR_MESSAGE = "errorMessage";
-    protected static final String REQUEST_ATTRIBUTE_LOGGED_IN = "loggedIn";
 
     public abstract void execute(
             HttpServletRequest request,
