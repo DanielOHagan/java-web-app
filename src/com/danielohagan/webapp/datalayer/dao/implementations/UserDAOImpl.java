@@ -87,7 +87,25 @@ public class UserDAOImpl implements IUserDAO {
 
     @Override
     public void updatePassword(int id, String password) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection(
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
+                );
+        String sqlStatement;
 
+        if (connection != null) {
+            try(Statement statement = connection.createStatement()) {
+
+                sqlStatement = "UPDATE " + ACCOUNT_TABLE_NAME + " SET " +
+                        PASSWORD_COLUMN_NAME + " = '" + password + "' WHERE " + ID_COLUMN_NAME +
+                        " = " + id + ";";
+
+                statement.execute(sqlStatement);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -443,7 +461,53 @@ public class UserDAOImpl implements IUserDAO {
             String oldPassword
     ) {
 
+        if (getById(id) == null) {
+            return AccountErrorType.FAILED_TO_RETRIEVE_USER;
+        }
 
+        if (newPassword == null || newPassword.isEmpty()) {
+            return AccountErrorType.INPUT_PASSWORD_EMPTY;
+        }
+
+        if (newPasswordConfirm == null || newPasswordConfirm.isEmpty()) {
+            return AccountErrorType.INPUT_PASSWORD_EMPTY;
+        }
+
+        if (oldPassword == null || oldPassword.isEmpty()) {
+            return AccountErrorType.INPUT_PASSWORD_EMPTY;
+        }
+
+        newPassword = newPassword.trim();
+        newPasswordConfirm = newPasswordConfirm.trim();
+        oldPassword = oldPassword.trim();
+
+        if (!newPassword.equals(newPasswordConfirm)) {
+            return AccountErrorType.INPUT_PASSWORD_MISMATCH;
+        }
+
+        if (passwordCotainsIllegalChar(newPassword)) {
+            return AccountErrorType.INPUT_PASSWORD_CONTAINS_INVALID_CHARACTER;
+        }
+
+        if (passwordCotainsIllegalChar(oldPassword)) {
+            return AccountErrorType.INPUT_PASSWORD_CONTAINS_INVALID_CHARACTER;
+        }
+
+        if (newPassword.length() > PASSWORD_MAX_LENGTH) {
+            return AccountErrorType.INPUT_PASSWORD_TOO_LONG;
+        }
+
+        if (newPassword.length() < PASSWORD_MIN_LENGTH) {
+            return AccountErrorType.INPUT_PASSWORD_TOO_SHORT;
+        }
+
+        if (oldPassword.length() > PASSWORD_MAX_LENGTH) {
+            return AccountErrorType.INPUT_PASSWORD_TOO_LONG;
+        }
+
+        if (oldPassword.length() < PASSWORD_MIN_LENGTH) {
+            return AccountErrorType.INPUT_PASSWORD_TOO_SHORT;
+        }
 
         return ErrorType.NO_ERROR;
     }
@@ -504,6 +568,9 @@ public class UserDAOImpl implements IUserDAO {
             return AccountErrorType.INPUT_PASSWORD_EMPTY;
         }
 
+        email = email.trim();
+        password = password.trim();
+
         if (email.length() > EMAIL_MAX_LENGTH) {
             return AccountErrorType.INPUT_EMAIL_TOO_LONG;
         }
@@ -521,6 +588,13 @@ public class UserDAOImpl implements IUserDAO {
         }
 
         //TODO:: Check for invalid characters
+        if (emailCotainsIllegalChar(email)) {
+
+        }
+
+        if (passwordCotainsIllegalChar(password)) {
+
+        }
 
         return ErrorType.NO_ERROR;
     }
@@ -530,6 +604,8 @@ public class UserDAOImpl implements IUserDAO {
         if (username == null || username.isEmpty()) {
             return AccountErrorType.INPUT_USERNAME_EMPTY;
         }
+
+        username = username.trim();
 
         if (username.length() > USERNAME_MAX_LENGTH) {
             return AccountErrorType.INPUT_USERNAME_TOO_LONG;
@@ -542,6 +618,18 @@ public class UserDAOImpl implements IUserDAO {
         //TODO:: Check for invalid characters
 
         return ErrorType.NO_ERROR;
+    }
+
+    private boolean passwordCotainsIllegalChar(String password) {
+
+
+        return false;
+    }
+
+    private boolean emailCotainsIllegalChar(String email) {
+
+
+        return false;
     }
 
     private IErrorType emailPasswordConfirmationGetErrorType(

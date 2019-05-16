@@ -10,6 +10,7 @@ public enum AccountErrorType implements IErrorType {
     DOES_NOT_EXIST("The requested account does not exist", false),
     DOES_NOT_HAVE_PERMISSION("Your account does not have the required permission to perform the task", false),
 
+    FAILED_TO_RETRIEVE_USER("Failed to retrieve account information", false),
     FAILED_TO_RETRIEVE_EMAIL("Failed to retrieve account Email", false),
     FAILED_TO_RETRIEVE_USERNAME("Failed to retrieve account Username", false),
 
@@ -91,6 +92,7 @@ public enum AccountErrorType implements IErrorType {
 
     /* ACCOUNT DELETION ERRORS*/
     DELETION_FAILED("Failed to delete account", false),
+
 
     INVALID_EMAIL("Invalid Email address", false),
     INVALID_USERNAME("Invalid Username", false);

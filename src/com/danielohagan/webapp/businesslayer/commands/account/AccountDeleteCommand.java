@@ -29,20 +29,14 @@ public class AccountDeleteCommand extends AbstractCommand {
             userDAO.deleteUser(id);
 
             if (userDAO.getById(id) != null) {
-                request.setAttribute(
-                        REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                        AccountErrorType.DELETION_FAILED.getErrorMessage()
-                );
+                setRequestError(request, AccountErrorType.DELETION_FAILED);
             } else {
                 //Remove session attributes
                 SessionManager.logOutUser(httpSession);
             }
 
         } else {
-            request.setAttribute(
-                    REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                    AccountErrorType.NOT_LOGGED_IN.getErrorMessage()
-            );
+            setRequestError(request, AccountErrorType.NOT_LOGGED_IN);
         }
 
         try {

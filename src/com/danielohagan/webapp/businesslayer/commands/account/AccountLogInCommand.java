@@ -46,11 +46,7 @@ public class AccountLogInCommand extends AbstractCommand {
                 request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                         .forward(request, response);
             } else {
-                //Set the error message
-                request.setAttribute(
-                        REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                        errorType.getErrorMessage()
-                );
+                setRequestError(request, errorType);
 
                 SessionManager.setSessionUserAttributes(httpSession, user);
 

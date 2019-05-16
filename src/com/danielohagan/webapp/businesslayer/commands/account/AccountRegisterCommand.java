@@ -23,6 +23,8 @@ public class AccountRegisterCommand extends AbstractCommand {
     private static final String HTML_FORM_PASSWORD = "registerFormPassword";
     private static final String HTML_FORM_PASSWORD_CONFIRM = "registerFormPasswordConfirm";
 
+    private static final String SUCCESSFUL_REGISTER = "Successfully created an account";
+
     @Override
     public void execute(
             HttpServletRequest request,
@@ -56,11 +58,8 @@ public class AccountRegisterCommand extends AbstractCommand {
             user = userDAO.getByEmailAndPassword(email, password);
 
             if (user == null) {
-                //Set error message
-                request.setAttribute(
-                        REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                        AccountErrorType.CREATION_FAILED.getErrorMessage()
-                );
+
+                setRequestError(request, AccountErrorType.CREATION_FAILED);
 
                 try {
                     request.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
@@ -74,6 +73,8 @@ public class AccountRegisterCommand extends AbstractCommand {
                 //Log in to the HTTP Session
                 SessionManager.setSessionUserAttributes(httpSession, user);
 
+                setRequestInfo(request, SUCCESSFUL_REGISTER);
+
                 try {
                     request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                             .forward(request, response);
@@ -85,11 +86,8 @@ public class AccountRegisterCommand extends AbstractCommand {
             }
 
         } else {
-            //Set the error message
-            request.setAttribute(
-                    REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                    errorType.getErrorMessage()
-            );
+
+            setRequestError(request, errorType);
 
             try {
                 request.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)

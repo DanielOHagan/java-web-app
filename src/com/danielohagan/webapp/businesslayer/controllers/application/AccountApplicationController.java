@@ -25,7 +25,7 @@ public class AccountApplicationController extends AbstractApplicationController 
     private final String REGISTER_KEY = "register";
     private final String PROFILE_KEY = "profile";
     private final String SETTINGS_KEY = "settings";
-    private final String CHANGE_PASSWORD_KEY = "changePassword";
+    private final String CHANGE_PASSWORD_KEY = "change-password";
 
     private final String URL_PARAM_ID = "id";
 
@@ -56,7 +56,6 @@ public class AccountApplicationController extends AbstractApplicationController 
         mCommandMap.put(LOG_IN_KEY, AccountLogInCommand.class);
         mCommandMap.put(LOG_OUT_KEY, AccountLogOutCommand.class);
         mCommandMap.put(REGISTER_KEY, AccountRegisterCommand.class);
-        mCommandMap.put(SETTINGS_KEY, AccountUpdateCommand.class);
 
         mUserDAO = new UserDAOImpl();
     }
@@ -82,9 +81,6 @@ public class AccountApplicationController extends AbstractApplicationController 
                 break;
             case LOG_OUT_KEY:
                 command = new AccountLogOutCommand();
-                break;
-            case SETTINGS_KEY:
-                command = new AccountUpdateCommand();
                 break;
             case CHANGE_PASSWORD_KEY:
                 command = new AccountChangePasswordCommand();

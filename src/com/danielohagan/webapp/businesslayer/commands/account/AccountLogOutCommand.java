@@ -12,6 +12,8 @@ import java.io.IOException;
 
 public class AccountLogOutCommand extends AbstractCommand {
 
+    private static final String SUCCESSFUL_LOG_OUT = "Successfully logged out of your account";
+
     @Override
     public void execute(
             HttpServletRequest request,
@@ -21,6 +23,8 @@ public class AccountLogOutCommand extends AbstractCommand {
 
         //Remove session attributes
         SessionManager.logOutUser(httpSession);
+
+        setRequestInfo(request, SUCCESSFUL_LOG_OUT);
 
         try {
             request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
