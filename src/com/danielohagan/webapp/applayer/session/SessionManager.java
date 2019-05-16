@@ -37,4 +37,12 @@ public class SessionManager {
         httpSession.setAttribute(LOGGED_IN, FALSE);
         httpSession.removeAttribute(ATTRIBUTE_USER);
     }
+
+    public static User getCurrentUser(HttpSession httpSession) {
+        if (httpSession != null) {
+            return (User) httpSession.getAttribute(ATTRIBUTE_USER);
+        }
+
+        return null;
+    }
 }

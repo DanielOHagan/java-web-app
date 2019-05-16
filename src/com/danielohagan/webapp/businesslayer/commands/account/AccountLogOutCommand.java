@@ -23,7 +23,7 @@ public class AccountLogOutCommand extends AbstractCommand {
         SessionManager.logOutUser(httpSession);
 
         try {
-            request.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+            request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                     .forward(request, response);
         } catch (ServletException e) {
             e.printStackTrace();

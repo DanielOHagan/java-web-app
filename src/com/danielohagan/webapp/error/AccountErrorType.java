@@ -84,10 +84,13 @@ public enum AccountErrorType implements IErrorType {
     INPUT_PASSWORD_MISMATCH("The input passwords do not match", false),
 
 
-    /* ACCOUNT LOGIN ERRORS */
+    /* ACCOUNT LOGIN/LOGOUT ERRORS */
     LOGIN_NO_CORRESPONDING_ACCOUNT("There is no account corresponding to the given inputs", false),
+    NOT_LOGGED_IN("Not currently logged in", false),
 
 
+    /* ACCOUNT DELETION ERRORS*/
+    DELETION_FAILED("Failed to delete account", false),
 
     INVALID_EMAIL("Invalid Email address", false),
     INVALID_USERNAME("Invalid Username", false);

@@ -86,25 +86,17 @@ public class UserDAOImpl implements IUserDAO {
     }
 
     @Override
-    public void updateEmail(int id, String email) {
+    public void updatePassword(int id, String password) {
 
     }
 
-    @Override
-    public void updatePassword(int id, String newPassword) {
-
-    }
-
-    @Override
-    public void updateUsername(int id, String username) {
-
-    }
-
-    @Override
-    public void updateUser(int id, User user) {
-
-    }
-
+    /**
+     * Store an instance of the User in the database
+     *
+     * @param user The User entity of the newly created account.
+     * @param password The User's password, passed separately so it
+     *                 is lost after it is stored in the database
+     */
     @Override
     public void createNewUser(User user, String password) {
         Connection connection =
@@ -130,9 +122,31 @@ public class UserDAOImpl implements IUserDAO {
         }
     }
 
+    /**
+     * Delete a User account from the database
+     *
+     * @param id The unique user ID
+     */
     @Override
     public void deleteUser(int id) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection(
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
+                );
+        String sqlStatement;
 
+        if (connection != null) {
+            try (Statement statement = connection.createStatement()) {
+
+                sqlStatement = "DELETE FROM " + ACCOUNT_TABLE_NAME +
+                        " WHERE " + ID_COLUMN_NAME + " = " + id + ";";
+
+                statement.execute(sqlStatement);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -418,6 +432,18 @@ public class UserDAOImpl implements IUserDAO {
         ) {
             return errorType;
         }
+
+        return ErrorType.NO_ERROR;
+    }
+
+    public IErrorType changePasswordGetErrorType(
+            int id,
+            String newPassword,
+            String newPasswordConfirm,
+            String oldPassword
+    ) {
+
+
 
         return ErrorType.NO_ERROR;
     }

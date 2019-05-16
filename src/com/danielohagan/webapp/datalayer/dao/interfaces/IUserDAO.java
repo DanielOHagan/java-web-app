@@ -6,13 +6,8 @@ public interface IUserDAO extends IEntityDAO<User> {
 
     User getByEmailAndPassword(String email, String password);
 
-    void updateEmail(int id, String newEmail);
-    void updatePassword(int id, String newPassword);
-    void updateUsername(int id, String newUsername);
-    void updateUser(int id, User user);
-
+    void updatePassword(int id, String password);
     void createNewUser(User user, String password);
-
     void deleteUser(int id);
 
 }

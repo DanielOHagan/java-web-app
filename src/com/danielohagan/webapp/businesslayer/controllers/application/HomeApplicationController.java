@@ -28,7 +28,7 @@ public class HomeApplicationController extends AbstractApplicationController {
 
         //Forward dispatcher
         try {
-            mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE).forward(mRequest, mResponse);
+            mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP).forward(mRequest, mResponse);
         } catch (ServletException e) {
             e.printStackTrace();
         } catch (IOException e) {

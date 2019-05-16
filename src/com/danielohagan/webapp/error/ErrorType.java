@@ -57,4 +57,9 @@ public enum ErrorType implements IErrorType {
     public boolean shouldHideFromUser() {
         return mHideFromUser;
     }
+
+    @Override
+    public String toString() {
+        return mErrorMessage;
+    }
 }

@@ -12,7 +12,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-public class AccountDeleteCommand extends AbstractCommand {
+public class AccountChangePasswordCommand extends AbstractCommand {
+
+    private final String HTML_FORM_NEW_PASSWORD = "newPassword";
+    private final String HTML_FORM_NEW_PASSWORD_CONFIRM = "newPasswordConfirm";
+    private final String HTML_FORM_OLD_PASSWORD = "oldPassword";
 
     @Override
     public void execute(
@@ -22,36 +26,27 @@ public class AccountDeleteCommand extends AbstractCommand {
         UserDAOImpl userDAO = new UserDAOImpl();
         HttpSession httpSession = request.getSession();
 
-        //Delete the user
         if (SessionManager.isLoggedIn(httpSession)) {
-            int id = SessionManager.getCurrentUser(httpSession).getId();
+            String newPassword = request.getParameter(HTML_FORM_NEW_PASSWORD);
+            String newPasswordConfirm = request.getParameter(HTML_FORM_NEW_PASSWORD_CONFIRM);
+            String oldPassword = request.getParameter(HTML_FORM_OLD_PASSWORD);
 
-            userDAO.deleteUser(id);
 
-            if (userDAO.getById(id) != null) {
-                request.setAttribute(
-                        REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                        AccountErrorType.DELETION_FAILED.getErrorMessage()
-                );
-            } else {
-                //Remove session attributes
-                SessionManager.logOutUser(httpSession);
-            }
 
         } else {
             request.setAttribute(
                     REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                    AccountErrorType.NOT_LOGGED_IN.getErrorMessage()
+                    AccountErrorType.NOT_LOGGED_IN
             );
-        }
 
-        try {
-            request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                    .forward(request, response);
-        } catch (ServletException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                        .forward(request, response);
+            } catch (ServletException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

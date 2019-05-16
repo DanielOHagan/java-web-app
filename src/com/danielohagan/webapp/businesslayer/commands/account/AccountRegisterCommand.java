@@ -63,7 +63,7 @@ public class AccountRegisterCommand extends AbstractCommand {
                 );
 
                 try {
-                    request.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_PAGE)
+                    request.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
                             .forward(request, response);
                 } catch (ServletException e) {
                     e.printStackTrace();
@@ -75,7 +75,7 @@ public class AccountRegisterCommand extends AbstractCommand {
                 SessionManager.setSessionUserAttributes(httpSession, user);
 
                 try {
-                    request.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                    request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                             .forward(request, response);
                 } catch (ServletException e) {
                     e.printStackTrace();
@@ -92,7 +92,7 @@ public class AccountRegisterCommand extends AbstractCommand {
             );
 
             try {
-                request.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_PAGE)
+                request.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
                         .forward(request, response);
             } catch (ServletException e) {
                 e.printStackTrace();

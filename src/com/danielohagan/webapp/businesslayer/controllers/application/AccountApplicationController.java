@@ -4,11 +4,9 @@ import com.danielohagan.webapp.applayer.session.SessionManager;
 import com.danielohagan.webapp.applayer.utils.JSPFileMap;
 import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 import com.danielohagan.webapp.businesslayer.commands.ErrorCommand;
-import com.danielohagan.webapp.businesslayer.commands.account.AccountDeleteCommand;
-import com.danielohagan.webapp.businesslayer.commands.account.AccountLogInCommand;
-import com.danielohagan.webapp.businesslayer.commands.account.AccountLogOutCommand;
-import com.danielohagan.webapp.businesslayer.commands.account.AccountRegisterCommand;
+import com.danielohagan.webapp.businesslayer.commands.account.*;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
+import com.danielohagan.webapp.error.AccountErrorType;
 import com.danielohagan.webapp.error.ApplicationControllerErrorType;
 import com.danielohagan.webapp.error.ErrorType;
 import com.danielohagan.webapp.error.IErrorType;
@@ -26,6 +24,8 @@ public class AccountApplicationController extends AbstractApplicationController 
     private final String LOG_OUT_KEY = "logout";
     private final String REGISTER_KEY = "register";
     private final String PROFILE_KEY = "profile";
+    private final String SETTINGS_KEY = "settings";
+    private final String CHANGE_PASSWORD_KEY = "changePassword";
 
     private final String URL_PARAM_ID = "id";
 
@@ -56,6 +56,7 @@ public class AccountApplicationController extends AbstractApplicationController 
         mCommandMap.put(LOG_IN_KEY, AccountLogInCommand.class);
         mCommandMap.put(LOG_OUT_KEY, AccountLogOutCommand.class);
         mCommandMap.put(REGISTER_KEY, AccountRegisterCommand.class);
+        mCommandMap.put(SETTINGS_KEY, AccountUpdateCommand.class);
 
         mUserDAO = new UserDAOImpl();
     }
@@ -81,6 +82,12 @@ public class AccountApplicationController extends AbstractApplicationController 
                 break;
             case LOG_OUT_KEY:
                 command = new AccountLogOutCommand();
+                break;
+            case SETTINGS_KEY:
+                command = new AccountUpdateCommand();
+                break;
+            case CHANGE_PASSWORD_KEY:
+                command = new AccountChangePasswordCommand();
                 break;
             case REGISTER_KEY:
                 command = new AccountRegisterCommand();
@@ -113,7 +120,7 @@ public class AccountApplicationController extends AbstractApplicationController 
 
                     setProfilePageAttribs();
 
-                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_PROFILE_PAGE)
+                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_PROFILE_JSP)
                             .forward(mRequest, mResponse);
                     break;
                 case LOG_IN_KEY:
@@ -122,7 +129,7 @@ public class AccountApplicationController extends AbstractApplicationController 
                     // (They shouldn't be given a link to the login page if they are already logged in)
 
                     if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                        mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                        mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                                 .forward(mRequest, mResponse);
                     } else {
                         mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
@@ -136,15 +143,34 @@ public class AccountApplicationController extends AbstractApplicationController 
                         command.execute(mRequest, mResponse);
                     }
 
-                    mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                    mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                             .forward(mRequest, mResponse);
                     break;
+                case SETTINGS_KEY:
+
+                    if (SessionManager.isLoggedIn(mRequest.getSession())) {
+                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_SETTINGS_JSP)
+                                .forward(mRequest, mResponse);
+                    } else {
+                        mRequest.setAttribute(
+                                REQUEST_ATTRIBUTE_ERROR_MESSAGE,
+                                AccountErrorType.NOT_LOGGED_IN
+                        );
+
+                        mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                                .forward(mRequest, mResponse);
+                    }
+                    break;
                 case REGISTER_KEY:
-                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_PAGE)
+                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
                             .forward(mRequest, mResponse);
                     break;
                 default:
-                    mRequest.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                    mRequest.setAttribute(
+                            REQUEST_ATTRIBUTE_ERROR_MESSAGE,
+                            ErrorType.HTTP_RESPONSE_CODE_404.getErrorMessage()
+                    );
+                    mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                             .forward(mRequest, mResponse);
                     break;
             }

@@ -7,11 +7,6 @@ public abstract class AbstractCommand {
 
     protected static final String REQUEST_TRUE = "true";
     protected static final String REQUEST_FALSE = "false";
-
-    /*
-     * REQUEST_ATTRIBUTE_ERROR_MESSAGE
-     *  The attribute tag used to store the error message
-     */
     protected static final String REQUEST_ATTRIBUTE_ERROR_MESSAGE = "errorMessage";
 
     public abstract void execute(

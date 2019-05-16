@@ -16,8 +16,8 @@ import java.io.IOException;
 
 public class AccountLogInCommand extends AbstractCommand {
 
-    private static final String HTML_FORM_EMAIL = "loginFormEmail";
-    private static final String HTML_FORM_PASSWORD = "loginFormPassword";
+    private final String HTML_FORM_EMAIL = "loginFormEmail";
+    private final String HTML_FORM_PASSWORD = "loginFormPassword";
 
     @Override
     public void execute(
@@ -43,7 +43,7 @@ public class AccountLogInCommand extends AbstractCommand {
 
                 SessionManager.setSessionUserAttributes(httpSession, user);
 
-                request.getRequestDispatcher(JSPFileMap.HOME_PAGE)
+                request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                         .forward(request, response);
             } else {
                 //Set the error message

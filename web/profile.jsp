@@ -37,5 +37,10 @@
                 </c:choose>
             </ul>
         </nav>
+        <main>
+            <a href="${pageContext.request.contextPath}/account/settings">
+                Settings
+            </a>
+        </main>
     </body>
 </html>

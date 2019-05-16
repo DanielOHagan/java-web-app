@@ -4,6 +4,8 @@ import java.util.Map;
 
 public abstract class AbstractApplicationController {
 
+    protected static final String REQUEST_ATTRIBUTE_ERROR_MESSAGE = "errorMessage";
+
     protected Map<String, Class> mCommandMap;
 
     public abstract void processGet();

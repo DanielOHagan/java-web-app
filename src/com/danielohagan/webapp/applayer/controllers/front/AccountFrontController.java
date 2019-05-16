@@ -27,10 +27,6 @@ public class AccountFrontController extends HttpServlet {
 
         //TODO:: Filters and whatnot
 
-        //TODO:: If profile and a ?id is not set,
-        // then set it to the logged in user,
-        // if not logged in the send to error page
-
         new AccountApplicationController(request, response).processGet();
     }
 }
