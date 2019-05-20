@@ -5,8 +5,8 @@ import com.danielohagan.webapp.applayer.session.SessionManager;
 import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
 import com.danielohagan.webapp.businesslayer.entities.account.User;
-import com.danielohagan.webapp.error.ErrorType;
-import com.danielohagan.webapp.error.IErrorType;
+import com.danielohagan.webapp.error.type.ErrorType;
+import com.danielohagan.webapp.error.type.IErrorType;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -41,14 +41,14 @@ public class AccountLogInCommand extends AbstractCommand {
         try {
             if (errorType == ErrorType.NO_ERROR) {
 
-                SessionManager.setSessionUserAttributes(httpSession, user);
+                SessionManager.logInUser(httpSession, user);
 
                 request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
                         .forward(request, response);
             } else {
                 setRequestError(request, errorType);
 
-                SessionManager.setSessionUserAttributes(httpSession, user);
+                SessionManager.logInUser(httpSession, user);
 
                 request.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
                         .forward(request, response);

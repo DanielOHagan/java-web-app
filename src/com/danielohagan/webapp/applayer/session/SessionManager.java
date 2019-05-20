@@ -8,21 +8,19 @@ public class SessionManager {
 
     private static final String TRUE = "true";
     private static final String FALSE = "false";
-
     private static final String LOGGED_IN = "loggedIn";
-
     private static final String ATTRIBUTE_USER = "currentUser";
 
-    public static void setSessionUserAttributes(
+    //Time before user is logged out for inactivity, in seconds
+    private static final int MAX_INACTIVE_INTERVAL = 3_600;
+
+    public static void logInUser(
             HttpSession httpSession,
             User user
     ) {
-        if (user != null) {
-            httpSession.setAttribute(ATTRIBUTE_USER, user);
-            httpSession.setAttribute(LOGGED_IN, TRUE);
-        } else {
-            httpSession.setAttribute(LOGGED_IN, FALSE);
-        }
+        httpSession.setAttribute(ATTRIBUTE_USER, user);
+        httpSession.setAttribute(LOGGED_IN, TRUE);
+        httpSession.setMaxInactiveInterval(MAX_INACTIVE_INTERVAL);
     }
 
     public static boolean isLoggedIn(HttpSession httpSession) {

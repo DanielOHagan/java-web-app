@@ -7,6 +7,8 @@ public class DatabaseConnection {
 
     private static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
 
+    public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
     public static final String SYSTEM_JDBC_ADMIN_USERNAME = "JDBC_ADMIN_USERNAME";
     public static final String SYSTEM_JDBC_ADMIN_PASSWORD = "JDBC_ADMIN_PASSWORD";
     public static final String SYSTEM_JDBC_LOCALHOST_URL = "JDBC_LOCALHOST_URL";

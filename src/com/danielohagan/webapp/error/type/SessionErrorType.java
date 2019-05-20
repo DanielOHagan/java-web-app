@@ -1,15 +1,13 @@
-package com.danielohagan.webapp.error;
+package com.danielohagan.webapp.error.type;
 
-public enum  DatabaseErrorType implements IErrorType {
+public enum SessionErrorType implements IErrorType {
 
-    /* Database Errors */
-    DATABASE_CONNECTION_FAILED("Could not connect to DataBase", true),
-    FAILED_TO_RETRIEVE_TABLE("Table can not be found", true);
+    FAILED_TO_RETRIEVE_CURRENT_USER("Failed to retrieve the session's current User.", false);
 
     private String mErrorMessage;
     private boolean mHideFromUser;
 
-    DatabaseErrorType(String errorMessage, boolean hideFromUser) {
+    SessionErrorType(String errorMessage, boolean hideFromUser) {
         mErrorMessage = errorMessage;
         mHideFromUser = hideFromUser;
     }

@@ -1,18 +1,20 @@
 package com.danielohagan.webapp.businesslayer.commands;
 
-import com.danielohagan.webapp.error.IErrorType;
+import com.danielohagan.webapp.error.type.IErrorType;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public abstract class AbstractCommand {
 
-    protected static final String REQUEST_TRUE = "true";
-    protected static final String REQUEST_FALSE = "false";
-    protected static final String REQUEST_ATTRIBUTE_ERROR_MESSAGE = "errorMessage";
-    protected static final String REQUEST_ATTRIBUTE_INFO_MESSAGE = "infoMessage";
-    protected static final String REQUEST_ATTRIBUTE_HAS_ERROR = "hasError";
-    protected static final String REQUEST_ATTRIBUTE_HAS_INFO = "hasInfo";
+    private static final String REQUEST_TRUE = "true";
+    private static final String REQUEST_FALSE = "false";
+
+    private static final String REQUEST_ATTRIBUTE_ERROR_MESSAGE = "errorMessage";
+    private static final String REQUEST_ATTRIBUTE_INFO_MESSAGE = "infoMessage";
+
+    private static final String REQUEST_ATTRIBUTE_HAS_ERROR = "hasError";
+    private static final String REQUEST_ATTRIBUTE_HAS_INFO = "hasInfo";
 
     public abstract void execute(
             HttpServletRequest request,

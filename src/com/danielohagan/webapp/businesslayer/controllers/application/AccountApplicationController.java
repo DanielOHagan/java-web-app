@@ -6,10 +6,10 @@ import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 import com.danielohagan.webapp.businesslayer.commands.ErrorCommand;
 import com.danielohagan.webapp.businesslayer.commands.account.*;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
-import com.danielohagan.webapp.error.AccountErrorType;
-import com.danielohagan.webapp.error.ApplicationControllerErrorType;
-import com.danielohagan.webapp.error.ErrorType;
-import com.danielohagan.webapp.error.IErrorType;
+import com.danielohagan.webapp.error.type.AccountErrorType;
+import com.danielohagan.webapp.error.type.ApplicationControllerErrorType;
+import com.danielohagan.webapp.error.type.ErrorType;
+import com.danielohagan.webapp.error.type.IErrorType;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

@@ -1,4 +1,4 @@
-package com.danielohagan.webapp.error;
+package com.danielohagan.webapp.error.type;
 
 public interface IErrorType {
 

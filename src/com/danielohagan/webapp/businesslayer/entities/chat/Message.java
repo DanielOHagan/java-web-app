@@ -2,20 +2,20 @@ package com.danielohagan.webapp.businesslayer.entities.chat;
 
 import com.danielohagan.webapp.businesslayer.entities.IEntity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Message implements IEntity {
 
     private int mId;
     private String mMessageBody;
-    private LocalDate mUploadTime;
+    private LocalDateTime mCreationTime;
 
     public Message() {}
 
-    public Message(int id, String messageBody, LocalDate uploadTime) {
+    public Message(int id, String messageBody, LocalDateTime creationTime) {
         mId = id;
         mMessageBody = messageBody;
-        mUploadTime = uploadTime;
+        mCreationTime = creationTime;
     }
 
     @Override

@@ -5,10 +5,10 @@ import com.danielohagan.webapp.applayer.utils.JSPFileMap;
 import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 import com.danielohagan.webapp.businesslayer.entities.account.User;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
-import com.danielohagan.webapp.error.AccountErrorType;
-import com.danielohagan.webapp.error.ErrorType;
-import com.danielohagan.webapp.error.IErrorType;
-import com.danielohagan.webapp.error.SessionErrorType;
+import com.danielohagan.webapp.error.type.AccountErrorType;
+import com.danielohagan.webapp.error.type.ErrorType;
+import com.danielohagan.webapp.error.type.IErrorType;
+import com.danielohagan.webapp.error.type.SessionErrorType;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -22,7 +22,7 @@ public class AccountChangePasswordCommand extends AbstractCommand {
     private final String HTML_FORM_NEW_PASSWORD_CONFIRM = "newPasswordConfirm";
     private final String HTML_FORM_OLD_PASSWORD = "oldPassword";
 
-    private final String CHANGE_PASSWORD_SUCCESS_MESSAGE = "Successfully changed User's password";
+    private final String CHANGE_PASSWORD_SUCCESS_MESSAGE = "Password successfully changed";
 
     @Override
     public void execute(

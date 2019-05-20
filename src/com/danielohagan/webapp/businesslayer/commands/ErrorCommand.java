@@ -1,7 +1,7 @@
 package com.danielohagan.webapp.businesslayer.commands;
 
-import com.danielohagan.webapp.error.ErrorType;
-import com.danielohagan.webapp.error.IErrorType;
+import com.danielohagan.webapp.error.type.ErrorType;
+import com.danielohagan.webapp.error.type.IErrorType;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

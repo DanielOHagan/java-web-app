@@ -4,7 +4,7 @@ import com.danielohagan.webapp.applayer.session.SessionManager;
 import com.danielohagan.webapp.applayer.utils.JSPFileMap;
 import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
-import com.danielohagan.webapp.error.AccountErrorType;
+import com.danielohagan.webapp.error.type.AccountErrorType;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

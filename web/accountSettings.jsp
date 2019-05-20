@@ -8,7 +8,6 @@
     <body>
         <nav>
             <ul>
-
                 <li>
                     <a href="${pageContext.request.contextPath}/account/profile?id=${currentUser.id}">
                         Profile

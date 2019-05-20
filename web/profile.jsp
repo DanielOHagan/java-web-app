@@ -41,6 +41,17 @@
             <a href="${pageContext.request.contextPath}/account/settings">
                 Settings
             </a>
+            <br />
+            <section>
+                <header>
+                    <h1>
+                        Username: ${currentUser.username}
+                    </h1>
+                </header>
+                <h2>Creation Time: ${currentUser.creationTime}</h2>
+                <h2>Email: ${currentUser.email}</h2>
+                <h2>User Status: ${currentUser.userStatus}</h2>
+            </section>
         </main>
     </body>
 </html>

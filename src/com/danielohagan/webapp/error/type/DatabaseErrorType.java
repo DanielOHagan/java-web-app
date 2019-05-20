@@ -1,13 +1,15 @@
-package com.danielohagan.webapp.error;
+package com.danielohagan.webapp.error.type;
 
-public enum ResourceErrorType implements IErrorType {
+public enum  DatabaseErrorType implements IErrorType {
 
-    NOT_FOUND("The requested resource can not be found or does not exist.", false);
+    /* Database Errors */
+    DATABASE_CONNECTION_FAILED("Could not connect to DataBase", true),
+    FAILED_TO_RETRIEVE_TABLE("Table can not be found", true);
 
     private String mErrorMessage;
     private boolean mHideFromUser;
 
-    ResourceErrorType(String errorMessage, boolean hideFromUser) {
+    DatabaseErrorType(String errorMessage, boolean hideFromUser) {
         mErrorMessage = errorMessage;
         mHideFromUser = hideFromUser;
     }

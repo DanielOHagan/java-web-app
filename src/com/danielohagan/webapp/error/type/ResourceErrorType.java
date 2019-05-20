@@ -1,13 +1,13 @@
-package com.danielohagan.webapp.error;
+package com.danielohagan.webapp.error.type;
 
-public enum SessionErrorType implements IErrorType {
+public enum ResourceErrorType implements IErrorType {
 
-    FAILED_TO_RETRIEVE_CURRENT_USER("Failed to retrieve the session's current User.", false);
+    NOT_FOUND("The requested resource can not be found or does not exist.", false);
 
     private String mErrorMessage;
     private boolean mHideFromUser;
 
-    SessionErrorType(String errorMessage, boolean hideFromUser) {
+    ResourceErrorType(String errorMessage, boolean hideFromUser) {
         mErrorMessage = errorMessage;
         mHideFromUser = hideFromUser;
     }
