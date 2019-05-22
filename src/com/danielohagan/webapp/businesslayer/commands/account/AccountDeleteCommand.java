@@ -14,6 +14,8 @@ import java.io.IOException;
 
 public class AccountDeleteCommand extends AbstractCommand {
 
+    private final String HTML_FORM_PASSWORD = "deleteAccountPassword";
+
     @Override
     public void execute(
             HttpServletRequest request,
@@ -21,18 +23,21 @@ public class AccountDeleteCommand extends AbstractCommand {
     ) {
         UserDAOImpl userDAO = new UserDAOImpl();
         HttpSession httpSession = request.getSession();
+        String password = request.getParameter(HTML_FORM_PASSWORD);
 
         //Delete the user
         if (SessionManager.isLoggedIn(httpSession)) {
             int id = SessionManager.getCurrentUser(httpSession).getId();
 
-            userDAO.deleteUser(id);
+            if (userDAO.isCorrectPassword(id, password)) {
+                userDAO.deleteUser(id);
+            }
 
             if (userDAO.getById(id) != null) {
                 setRequestError(request, AccountErrorType.DELETION_FAILED);
             } else {
                 //Remove session attributes
-                SessionManager.logOutUser(httpSession);
+                SessionManager.setDefault(httpSession);
             }
 
         } else {

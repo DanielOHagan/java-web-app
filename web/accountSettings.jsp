@@ -34,6 +34,15 @@
             <br />
             <button type="submit" form="changePasswordForm" value="changePassword">CHANGE PASSWORD</button>
         </form>
+        <br />
+        <br />
+        <form name="deleteAccountForm" id="deleteAccountForm" action="${pageContext.request.contextPath}/account/delete" method="post">
+            <label for="deleteAccountPassword">Old Password:</label>
+            <input type="password" name="deleteAccountPassword" id="deleteAccountPassword" width="32" />
+            <br />
+            <br />
+            <button type="submit" form="deleteAccountForm" value="deleteAccount">DELETE ACCOUNT</button>
+        </form>
 
         <c:if test="${requestScope.hasError.equals(\"true\")}">
             <p>${requestScope.errorMessage}</p>

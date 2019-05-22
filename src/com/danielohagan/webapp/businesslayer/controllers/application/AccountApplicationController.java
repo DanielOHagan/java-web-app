@@ -9,13 +9,13 @@ import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
 import com.danielohagan.webapp.error.type.AccountErrorType;
 import com.danielohagan.webapp.error.type.ApplicationControllerErrorType;
 import com.danielohagan.webapp.error.type.ErrorType;
-import com.danielohagan.webapp.error.type.IErrorType;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 public class AccountApplicationController extends AbstractApplicationController {
 
@@ -37,6 +37,7 @@ public class AccountApplicationController extends AbstractApplicationController 
     private HttpServletResponse mResponse;
     private UserDAOImpl mUserDAO;
     private String mKey;
+    private Map<String, Class> mCommandMap;
 
     public AccountApplicationController(
             HttpServletRequest request,
@@ -44,31 +45,18 @@ public class AccountApplicationController extends AbstractApplicationController 
     ) {
         mRequest = request;
         mResponse = response;
-
-        //Initialise or clear Command Map the populate with Controller related Commands
-        if (mCommandMap == null) {
-            mCommandMap = new HashMap<>();
-        } else {
-            mCommandMap.clear();
-        }
+        mCommandMap = new HashMap<>();
+        mUserDAO = new UserDAOImpl();
 
         mCommandMap.put(DELETE_KEY, AccountDeleteCommand.class);
         mCommandMap.put(LOG_IN_KEY, AccountLogInCommand.class);
         mCommandMap.put(LOG_OUT_KEY, AccountLogOutCommand.class);
         mCommandMap.put(REGISTER_KEY, AccountRegisterCommand.class);
-
-        mUserDAO = new UserDAOImpl();
+        mCommandMap.put(CHANGE_PASSWORD_KEY, AccountChangePasswordCommand.class);
     }
 
     @Override
     public void processPost() {
-
-        IErrorType errorType;
-
-        //TODO:: I think this URL validation code should eventually be done by a filter
-        if ((errorType = getURLErrorType()) != ErrorType.NO_ERROR) {
-            new ErrorCommand().execute(mRequest, mResponse, errorType);
-        }
 
         processURL();
 
@@ -93,6 +81,10 @@ public class AccountApplicationController extends AbstractApplicationController 
                 break;
             default:
                 command = new ErrorCommand();
+                command.setRequestError(
+                        mRequest,
+                        ApplicationControllerErrorType.COMMAND_CLASS_NOT_FOUND
+                );
                 break;
         }
 
@@ -101,74 +93,78 @@ public class AccountApplicationController extends AbstractApplicationController 
 
     @Override
     public void processGet() {
-        IErrorType errorType;
 
         processURL();
 
-        //TODO:: I think this URL validation code should eventually be done by a filter
-        if ((errorType = getURLErrorType()) != ErrorType.NO_ERROR) {
-            new ErrorCommand().execute(mRequest, mResponse, errorType);
-        }
-
         try {
-            switch (mKey) {
-                case PROFILE_KEY:
+            if (mKey == null) {
+                mRequest.setAttribute(
+                        REQUEST_ATTRIBUTE_ERROR_MESSAGE,
+                        ErrorType.HTTP_RESPONSE_CODE_404
+                );
 
-                    setProfilePageAttribs();
+                mRequest.getRequestDispatcher(JSPFileMap.ERROR_JSP)
+                        .forward(mRequest, mResponse);
+            } else {
+                switch (mKey) {
+                    case PROFILE_KEY:
 
-                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_PROFILE_JSP)
-                            .forward(mRequest, mResponse);
-                    break;
-                case LOG_IN_KEY:
+                        setProfilePageAttribs();
 
-                    //Forward the user to Home if they are already logged in
-                    // (They shouldn't be given a link to the login page if they are already logged in)
-
-                    if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                        mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_PROFILE_JSP)
                                 .forward(mRequest, mResponse);
-                    } else {
-                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
-                                .forward(mRequest, mResponse);
-                    }
-                    break;
-                case LOG_OUT_KEY:
-                    //Log out the user if key is LOG_OUT and user is logged in
-                    if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                        AccountLogOutCommand command = new AccountLogOutCommand();
-                        command.execute(mRequest, mResponse);
-                    }
+                        break;
+                    case LOG_IN_KEY:
 
-                    mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                            .forward(mRequest, mResponse);
-                    break;
-                case SETTINGS_KEY:
+                        //Forward the user to Home if they are already logged in
+                        // (They shouldn't be given a link to the login page if they are already logged in)
 
-                    if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_SETTINGS_JSP)
+                        if (SessionManager.isLoggedIn(mRequest.getSession())) {
+                            mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                                    .forward(mRequest, mResponse);
+                        } else {
+                            mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
+                                    .forward(mRequest, mResponse);
+                        }
+                        break;
+                    case LOG_OUT_KEY:
+                        //Log out the user if key is LOG_OUT and user is logged in
+                        if (SessionManager.isLoggedIn(mRequest.getSession())) {
+                            AccountLogOutCommand command = new AccountLogOutCommand();
+                            command.execute(mRequest, mResponse);
+                        } else {
+                            mResponse.sendRedirect(mRequest.getContextPath());
+                        }
+                        break;
+                    case SETTINGS_KEY:
+
+                        if (SessionManager.isLoggedIn(mRequest.getSession())) {
+                            mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_SETTINGS_JSP)
+                                    .forward(mRequest, mResponse);
+                        } else {
+                            mRequest.setAttribute(
+                                    REQUEST_ATTRIBUTE_ERROR_MESSAGE,
+                                    AccountErrorType.NOT_LOGGED_IN
+                            );
+
+                            mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                                    .forward(mRequest, mResponse);
+
+                        }
+                        break;
+                    case REGISTER_KEY:
+                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
                                 .forward(mRequest, mResponse);
-                    } else {
+                        break;
+                    default:
                         mRequest.setAttribute(
                                 REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                                AccountErrorType.NOT_LOGGED_IN
+                                ErrorType.HTTP_RESPONSE_CODE_404
                         );
-
-                        mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                        mRequest.getRequestDispatcher(JSPFileMap.ERROR_JSP)
                                 .forward(mRequest, mResponse);
-                    }
-                    break;
-                case REGISTER_KEY:
-                    mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
-                            .forward(mRequest, mResponse);
-                    break;
-                default:
-                    mRequest.setAttribute(
-                            REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                            ErrorType.HTTP_RESPONSE_CODE_404.getErrorMessage()
-                    );
-                    mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                            .forward(mRequest, mResponse);
-                    break;
+                        break;
+                }
             }
         } catch (ServletException e) {
             e.printStackTrace();
@@ -182,30 +178,20 @@ public class AccountApplicationController extends AbstractApplicationController 
         //Get request specific data from the URL
 
         String uri = mRequest.getRequestURI();
+        mKey = null;
 
         if (uri.startsWith("/")) {
             uri = uri.replaceFirst("/", "");
         }
 
-        String accountUri = uri.substring(uri.lastIndexOf(ACCOUNT_URL_PATTERN));
+        //Look for key 'account/(mKey)'
+        if (uri.contains(ACCOUNT_URL_PATTERN)) {
+            String accountUri = uri.substring(uri.lastIndexOf(ACCOUNT_URL_PATTERN));
 
-        mKey = accountUri.split("/")[1].toLowerCase();
-    }
-
-    private IErrorType getURLErrorType() {
-
-        //Check the retrieved key has a corresponding command
-        if (!mCommandMap.keySet().contains(mKey)) {
-            return ApplicationControllerErrorType.COMMAND_CLASS_NOT_FOUND;
+            if (accountUri.split("/").length > 1) {
+                mKey = accountUri.split("/")[1].toLowerCase();
+            }
         }
-
-        return ErrorType.NO_ERROR;
-    }
-
-    private void setAttributes() {
-        //TODO:: Session attributes
-
-        //TODO:: Request attributes
     }
 
     private void setProfilePageAttribs() {

@@ -21,7 +21,10 @@ public abstract class AbstractCommand {
             HttpServletResponse response
     );
 
-    protected void setRequestError(HttpServletRequest request, IErrorType errorType) {
+    public void setRequestError(
+            HttpServletRequest request,
+            IErrorType errorType
+    ) {
         request.setAttribute(
                 REQUEST_ATTRIBUTE_ERROR_MESSAGE,
                 errorType.getErrorMessage()
@@ -29,7 +32,7 @@ public abstract class AbstractCommand {
         request.setAttribute(REQUEST_ATTRIBUTE_HAS_ERROR, REQUEST_TRUE);
     }
 
-    protected void setRequestInfo(HttpServletRequest request, String info) {
+    public void setRequestInfo(HttpServletRequest request, String info) {
         request.setAttribute(
                 REQUEST_ATTRIBUTE_INFO_MESSAGE,
                 info

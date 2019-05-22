@@ -66,7 +66,7 @@ public class AccountRegisterCommand extends AbstractCommand {
                 setRequestError(request, AccountErrorType.CREATION_FAILED);
 
                 try {
-                    request.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
+                    request.getRequestDispatcher(request.getContextPath() + "/account/register")
                             .forward(request, response);
                 } catch (ServletException e) {
                     e.printStackTrace();

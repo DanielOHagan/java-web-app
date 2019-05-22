@@ -43,12 +43,13 @@ public class AccountLogInCommand extends AbstractCommand {
 
                 SessionManager.logInUser(httpSession, user);
 
-                request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                        .forward(request, response);
+//                request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+//                        .forward(request, response);
+                response.sendRedirect(request.getContextPath() + "/");
             } else {
                 setRequestError(request, errorType);
 
-                SessionManager.logInUser(httpSession, user);
+                SessionManager.setDefault(httpSession);
 
                 request.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
                         .forward(request, response);

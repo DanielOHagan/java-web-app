@@ -38,19 +38,21 @@
             </ul>
         </nav>
         <main>
-            <a href="${pageContext.request.contextPath}/account/settings">
-                Settings
-            </a>
-            <br />
+            <c:if test="${sessionScope.loggedIn.equals(\"true\")}">
+                <a href="${pageContext.request.contextPath}/account/settings">
+                    Settings
+                </a>
+                <br />
+            </c:if>
             <section>
                 <header>
                     <h1>
-                        Username: ${currentUser.username}
+                        Username: ${profileUser.username}
                     </h1>
                 </header>
-                <h2>Creation Time: ${currentUser.creationTime}</h2>
-                <h2>Email: ${currentUser.email}</h2>
-                <h2>User Status: ${currentUser.userStatus}</h2>
+                <h2>Creation Time: ${profileUser.creationTime}</h2>
+                <h2>Email: ${profileUser.email}</h2>
+                <h2>User Status: ${profileUser.userStatus}</h2>
             </section>
         </main>
     </body>

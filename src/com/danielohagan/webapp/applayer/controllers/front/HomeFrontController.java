@@ -16,7 +16,10 @@ public class HomeFrontController extends HttpServlet {
             HttpServletRequest request,
             HttpServletResponse response
     ) throws ServletException, IOException {
-        processRequest(request, response);
+        /*
+        There's currently no post requests sent from the Home Page so this method is empty
+         */
+
     }
 
     protected void doGet(
@@ -26,14 +29,5 @@ public class HomeFrontController extends HttpServlet {
         //TODO:: Filter validation
 
         new HomeApplicationController(request, response).processGet();
-    }
-
-    private void processRequest(
-            HttpServletRequest request,
-            HttpServletResponse response
-    ) throws ServletException, IOException {
-        /*
-        There's currently no post requests sent from the Home Page so this method is empty
-         */
     }
 }

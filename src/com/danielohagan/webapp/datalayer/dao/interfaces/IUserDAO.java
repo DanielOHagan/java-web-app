@@ -13,4 +13,5 @@ public interface IUserDAO extends IEntityDAO<User> {
     void createNewUser(User user, String password);
     void deleteUser(int id);
 
+    boolean isCorrectPassword(int id, String password);
 }

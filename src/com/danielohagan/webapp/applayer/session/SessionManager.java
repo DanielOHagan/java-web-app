@@ -43,4 +43,9 @@ public class SessionManager {
 
         return null;
     }
+
+    public static void setDefault(HttpSession httpSession) {
+        httpSession.setAttribute(LOGGED_IN, FALSE);
+        httpSession.removeAttribute(ATTRIBUTE_USER);
+    }
 }

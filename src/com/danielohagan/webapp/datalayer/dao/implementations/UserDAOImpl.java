@@ -190,6 +190,43 @@ public class UserDAOImpl implements IUserDAO {
     }
 
     @Override
+    public boolean isCorrectPassword(int id, String password) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection(
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
+                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
+                );
+        String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
+                " WHERE " + ID_COLUMN_NAME + " = ? AND " +
+                PASSWORD_COLUMN_NAME + " = ?;";
+
+        if (connection != null) {
+            try (
+                    PreparedStatement preparedStatement =
+                            connection.prepareStatement(sqlStatement)
+            ) {
+
+                preparedStatement.setInt(1, id);
+                preparedStatement.setString(2, password);
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if(resultSet.next()) {
+                    return true;
+                }
+
+                preparedStatement.close();
+                resultSet.close();
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return false;
+    }
+
+    @Override
     public void updateUserStatus(int id, UserStatus userStatus) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection(
@@ -265,6 +302,8 @@ public class UserDAOImpl implements IUserDAO {
 
         //Get the username corresponding to account with the given email and password
         if (connection != null) {
+
+            //TODO:: Turn into PreparedStatement
             try(Statement statement = connection.createStatement()) {
 
                 sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
@@ -445,6 +484,7 @@ public class UserDAOImpl implements IUserDAO {
         User user;
 
         try(Statement statement = connection.createStatement()) {
+            //TODO:: Convert to PreparedStatement
             String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
                     " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
                     "\";";
@@ -743,6 +783,9 @@ public class UserDAOImpl implements IUserDAO {
             String password
     ) {
         if (!accountExists(email, password)) {
+            if (isEmailTaken(email)) {
+                return AccountErrorType.INPUT_PASSWORD_INCORRECT;
+            }
             return AccountErrorType.LOGIN_NO_CORRESPONDING_ACCOUNT;
         }
 

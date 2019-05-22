@@ -1,7 +1,7 @@
 package com.danielohagan.webapp.businesslayer.commands.account;
 
-import com.danielohagan.webapp.applayer.utils.JSPFileMap;
 import com.danielohagan.webapp.applayer.session.SessionManager;
+import com.danielohagan.webapp.applayer.utils.JSPFileMap;
 import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 
 import javax.servlet.ServletException;
@@ -22,17 +22,24 @@ public class AccountLogOutCommand extends AbstractCommand {
         HttpSession httpSession = request.getSession();
 
         //Remove session attributes
-        SessionManager.logOutUser(httpSession);
+        if (SessionManager.isLoggedIn(request.getSession())) {
+            SessionManager.logOutUser(httpSession);
+            setRequestInfo(request, SUCCESSFUL_LOG_OUT);
 
-        setRequestInfo(request, SUCCESSFUL_LOG_OUT);
-
-        try {
-            request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                    .forward(request, response);
-        } catch (ServletException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                        .forward(request, response);
+            } catch (ServletException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                response.sendRedirect(request.getContextPath() + "/");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

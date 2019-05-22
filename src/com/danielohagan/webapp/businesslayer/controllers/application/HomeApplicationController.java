@@ -1,6 +1,7 @@
 package com.danielohagan.webapp.businesslayer.controllers.application;
 
 import com.danielohagan.webapp.applayer.utils.JSPFileMap;
+import com.danielohagan.webapp.error.type.ErrorType;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -11,6 +12,7 @@ public class HomeApplicationController extends AbstractApplicationController {
 
     private HttpServletRequest mRequest;
     private HttpServletResponse mResponse;
+    private String mKey;
 
     public HomeApplicationController(
             HttpServletRequest request,
@@ -22,19 +24,33 @@ public class HomeApplicationController extends AbstractApplicationController {
 
     @Override
     public void processGet() {
-        //TODO:: Session attributes
 
-        //TODO:: Request attributes
+        processURL();
 
-        //Forward dispatcher
-        try {
-            mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP).forward(mRequest, mResponse);
-        } catch (ServletException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (mKey != null && !mKey.equals("home")) {
+            mRequest.setAttribute(
+                    REQUEST_ATTRIBUTE_ERROR_MESSAGE,
+                    ErrorType.HTTP_RESPONSE_CODE_404
+            );
+
+            try {
+                mRequest.getRequestDispatcher(JSPFileMap.ERROR_JSP)
+                        .forward(mRequest, mResponse);
+            } catch (ServletException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
+                        .forward(mRequest, mResponse);
+            } catch (ServletException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
     }
 
     @Override
@@ -47,6 +63,17 @@ public class HomeApplicationController extends AbstractApplicationController {
 
     @Override
     protected void processURL() {
+        String uri = mRequest.getRequestURI();
+        mKey = null;
 
+        if (uri.contains("/")) {
+            uri = uri.replaceFirst("/", "");
+
+            String[] uriKeys = uri.split("/");
+
+            if (uriKeys.length > 1) {
+                mKey = uriKeys[uriKeys.length - 1].toLowerCase();
+            }
+        }
     }
 }

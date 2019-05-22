@@ -37,7 +37,9 @@
             </ul>
         </nav>
         <main>
-
+            <c:if test="${requestScope.hasInfo.equals(\"true\")}">
+                <p>Info: ${requestScope.infoMessage}</p>
+            </c:if>
         </main>
     </body>
 </html>
