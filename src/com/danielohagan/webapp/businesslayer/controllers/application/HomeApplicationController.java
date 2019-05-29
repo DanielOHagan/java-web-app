@@ -1,18 +1,19 @@
 package com.danielohagan.webapp.businesslayer.controllers.application;
 
 import com.danielohagan.webapp.applayer.utils.JSPFileMap;
+import com.danielohagan.webapp.businesslayer.commands.ErrorCommand;
+import com.danielohagan.webapp.error.response.ErrorResponse;
 import com.danielohagan.webapp.error.type.ErrorType;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 public class HomeApplicationController extends AbstractApplicationController {
 
     private HttpServletRequest mRequest;
     private HttpServletResponse mResponse;
     private String mKey;
+    private ErrorResponse mHomeErrorResponse;
 
     public HomeApplicationController(
             HttpServletRequest request,
@@ -20,6 +21,7 @@ public class HomeApplicationController extends AbstractApplicationController {
     ) {
         mRequest = request;
         mResponse = response;
+        mHomeErrorResponse = new ErrorResponse();
     }
 
     @Override
@@ -28,28 +30,10 @@ public class HomeApplicationController extends AbstractApplicationController {
         processURL();
 
         if (mKey != null && !mKey.equals("home")) {
-            mRequest.setAttribute(
-                    REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                    ErrorType.HTTP_RESPONSE_CODE_404
-            );
-
-            try {
-                mRequest.getRequestDispatcher(JSPFileMap.ERROR_JSP)
-                        .forward(mRequest, mResponse);
-            } catch (ServletException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            mHomeErrorResponse.add(ErrorType.HTTP_RESPONSE_CODE_404);
+            new ErrorCommand().execute(mRequest, mResponse, mHomeErrorResponse);
         } else {
-            try {
-                mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                        .forward(mRequest, mResponse);
-            } catch (ServletException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            loadPage(mRequest, mResponse, mHomeErrorResponse, JSPFileMap.INDEX_JSP);
         }
     }
 

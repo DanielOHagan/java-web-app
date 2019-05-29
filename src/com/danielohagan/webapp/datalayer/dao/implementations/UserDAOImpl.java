@@ -5,13 +5,14 @@ import com.danielohagan.webapp.datalayer.dao.databaseenums.UserStatus;
 import com.danielohagan.webapp.datalayer.dao.interfaces.IUserDAO;
 import com.danielohagan.webapp.datalayer.database.DatabaseConnection;
 import com.danielohagan.webapp.error.type.AccountErrorType;
-import com.danielohagan.webapp.error.type.ErrorType;
 import com.danielohagan.webapp.error.type.IErrorType;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-public class UserDAOImpl implements IUserDAO {
+public class  UserDAOImpl implements IUserDAO {
 
     private static final String SYSTEM_JDBC_ACCOUNT_TABLE_NAME =
             "JDBC_ACCOUNT_TABLE_NAME";
@@ -28,19 +29,19 @@ public class UserDAOImpl implements IUserDAO {
     private static final String SYSTEM_JDBC_CREATION_TIME_COLUMN_NAME =
             "JDBC_CREATION_TIME_COLUMN_NAME";
 
-    private static final String ACCOUNT_TABLE_NAME =
+    public static final String ACCOUNT_TABLE_NAME =
             System.getProperty(SYSTEM_JDBC_ACCOUNT_TABLE_NAME);
-    private static final String ID_COLUMN_NAME =
+    public static final String ID_COLUMN_NAME =
             System.getProperty(SYSTEM_JDBC_ID_COLUMN_NAME);
-    private static final String USERNAME_COLUMN_NAME =
+    public static final String USERNAME_COLUMN_NAME =
             System.getProperty(SYSTEM_JDBC_USERNAME_COLUMN_NAME);
-    private static final String EMAIL_COLUMN_NAME =
+    public static final String EMAIL_COLUMN_NAME =
             System.getProperty(SYSTEM_JDBC_EMAIL_COLUMN_NAME);
-    private static final String PASSWORD_COLUMN_NAME =
+    public static final String PASSWORD_COLUMN_NAME =
             System.getProperty(SYSTEM_JDBC_PASSWORD_COLUMN_NAME);
-    private static final String STATUS_COLUMN_NAME =
+    public static final String STATUS_COLUMN_NAME =
             System.getProperty(SYSTEM_JDBC_STATUS_COLUMN_NAME);
-    private static final String CREATION_TIME_COLUMN_NAME =
+    public static final String CREATION_TIME_COLUMN_NAME =
             System.getProperty(SYSTEM_JDBC_CREATION_TIME_COLUMN_NAME);
 
     public static final int EMAIL_MAX_LENGTH = 32;
@@ -54,10 +55,7 @@ public class UserDAOImpl implements IUserDAO {
     public User getById(int id) {
         User user = null;
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
 
         //Get the username corresponding to account_THINKTHISSHOULDGO with the given email and password
         if (connection != null) {
@@ -75,10 +73,7 @@ public class UserDAOImpl implements IUserDAO {
     public User getByEmailAndPassword(String email, String password) {
         User user = null;
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
 
         //Get the username corresponding to account with the given email and password
         if (connection != null) {
@@ -95,10 +90,7 @@ public class UserDAOImpl implements IUserDAO {
     @Override
     public void updatePassword(int id, String password) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement = "UPDATE " + ACCOUNT_TABLE_NAME + " SET " +
                 PASSWORD_COLUMN_NAME + " = ? WHERE " + ID_COLUMN_NAME + " = ?;";
 
@@ -128,10 +120,7 @@ public class UserDAOImpl implements IUserDAO {
     @Override
     public void createNewUser(User user, String password) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement = "INSERT INTO " + ACCOUNT_TABLE_NAME + " (" +
                 EMAIL_COLUMN_NAME + ", " + USERNAME_COLUMN_NAME + ", " +
                 PASSWORD_COLUMN_NAME + ", " + STATUS_COLUMN_NAME + ")" +
@@ -167,10 +156,7 @@ public class UserDAOImpl implements IUserDAO {
     @Override
     public void deleteUser(int id) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement = "DELETE FROM " + ACCOUNT_TABLE_NAME +
                 " WHERE " + ID_COLUMN_NAME + " = ?;";
 
@@ -179,7 +165,6 @@ public class UserDAOImpl implements IUserDAO {
                     PreparedStatement preparedStatement =
                          connection.prepareStatement(sqlStatement)
             ) {
-
                 preparedStatement.setInt(1, id);
 
                 preparedStatement.execute();
@@ -190,12 +175,40 @@ public class UserDAOImpl implements IUserDAO {
     }
 
     @Override
+    public boolean exists(int id) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
+                " WHERE " + ID_COLUMN_NAME + " = ?;";
+
+        if (connection != null) {
+            try (
+                    PreparedStatement preparedStatement =
+                            connection.prepareStatement(sqlStatement)
+            ) {
+                preparedStatement.setInt(1, id);
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    return true;
+                }
+
+                resultSet.close();
+                preparedStatement.close();
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return false;
+    }
+
+    @Override
     public boolean isCorrectPassword(int id, String password) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
                 " WHERE " + ID_COLUMN_NAME + " = ? AND " +
                 PASSWORD_COLUMN_NAME + " = ?;";
@@ -229,10 +242,7 @@ public class UserDAOImpl implements IUserDAO {
     @Override
     public void updateUserStatus(int id, UserStatus userStatus) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement = "UPDATE " + ACCOUNT_TABLE_NAME + " SET " +
                 STATUS_COLUMN_NAME + " = ? WHERE " + ID_COLUMN_NAME + " = ?;";
 
@@ -262,13 +272,11 @@ public class UserDAOImpl implements IUserDAO {
      *
      * @return
      */
+    @Override
     public User getUserByEmail(String email) {
         User user = null;
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
 
         //Get the username corresponding to account with the given email and password
         if (connection != null) {
@@ -290,12 +298,9 @@ public class UserDAOImpl implements IUserDAO {
      *
      * @return If an account_THINKTHISSHOULDGO exists then return true else return false
      */
-    private boolean accountExists(String email, String password) {
+    private boolean exists(String email, String password) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement;
         ResultSet resultSet;
         boolean accountExists = false;
@@ -340,10 +345,7 @@ public class UserDAOImpl implements IUserDAO {
 
     private boolean isEmailTaken(String email) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
                 " WHERE " + EMAIL_COLUMN_NAME + " = ?;";
         ResultSet resultSet;
@@ -387,10 +389,7 @@ public class UserDAOImpl implements IUserDAO {
 
     private boolean isUsernameTaken(String username) {
         Connection connection =
-                DatabaseConnection.getDatabaseConnection(
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_USERNAME),
-                        System.getProperty(DatabaseConnection.SYSTEM_JDBC_ADMIN_PASSWORD)
-                );
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
                 " WHERE " + USERNAME_COLUMN_NAME + " = ?;";
         ResultSet resultSet;
@@ -530,127 +529,122 @@ public class UserDAOImpl implements IUserDAO {
      * @param email The string from the HTML form Email input
      * @param password The string from the HTML form Password input
      *
-     * @return If no errors then returns ErrorType.NO_ERROR,
-     *  else it returns a specific error as to why the request failed
+     * @return List of errors
      */
-    public IErrorType userLoginGetErrorType(String email, String password) {
+    public List<IErrorType> userLoginGetErrors(String email, String password) {
         /*
-         * Sort through the parameters to see if the inputs are valid and exist in the database
+         * Sort through the parameters to see if the inputs are valid
+         * and exist in the database
          */
-        IErrorType errorType;
+        List<IErrorType> errorTypeList = new ArrayList<>();
 
         //Check if the inputs are valid
-        if (
-                (errorType = getEmailPasswordErrorType(email, password))
-                        != ErrorType.NO_ERROR
-        ) {
-            return errorType;
-        }
+        errorTypeList.addAll(getEmailPasswordErrors(email, password));
 
         //Check if the inputs correspond to an account on the database
-        if (
-                (errorType = getAccountConnectionErrorType(email, password))
-                        != ErrorType.NO_ERROR
-        ) {
-            return errorType;
-        }
+        errorTypeList.addAll(getAccountConnectionErrors(email, password));
 
-        return ErrorType.NO_ERROR;
+        return errorTypeList;
     }
 
-    public IErrorType changePasswordGetErrorType(
+    public List<IErrorType> changePasswordGetErrors(
             int id,
             String newPassword,
             String newPasswordConfirm,
             String oldPassword
     ) {
+        List<IErrorType> errorTypeList = new ArrayList<>();
 
         if (getById(id) == null) {
-            return AccountErrorType.FAILED_TO_RETRIEVE_USER;
+            errorTypeList.add(AccountErrorType.FAILED_TO_RETRIEVE_USER);
         }
 
+        //Find newPassword errors
         if (newPassword == null || newPassword.isEmpty()) {
-            return AccountErrorType.INPUT_PASSWORD_EMPTY;
+            errorTypeList.add(AccountErrorType.INPUT_PASSWORD_EMPTY);
+        } else {
+            newPassword = newPassword.trim();
         }
 
+        //Find newPasswordConfirm errors
         if (newPasswordConfirm == null || newPasswordConfirm.isEmpty()) {
-            return AccountErrorType.INPUT_PASSWORD_EMPTY;
+            errorTypeList.add(AccountErrorType.INPUT_PASSWORD_EMPTY);
+        } else {
+            newPasswordConfirm = newPasswordConfirm.trim();
         }
 
+        //Find oldPassword errors
         if (oldPassword == null || oldPassword.isEmpty()) {
-            return AccountErrorType.INPUT_PASSWORD_EMPTY;
+            errorTypeList.add(AccountErrorType.INPUT_PASSWORD_EMPTY);
+
+        } else {
+            oldPassword = oldPassword.trim();
+
+            if (passwordContainsIllegalChar(oldPassword)) {
+                errorTypeList.add(AccountErrorType.INPUT_PASSWORD_CONTAINS_INVALID_CHARACTER);
+            }
+
+            if (oldPassword.length() > PASSWORD_MAX_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_PASSWORD_TOO_LONG);
+            }
+
+            if (oldPassword.length() < PASSWORD_MIN_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_PASSWORD_TOO_SHORT);
+            }
         }
 
-        newPassword = newPassword.trim();
-        newPasswordConfirm = newPasswordConfirm.trim();
-        oldPassword = oldPassword.trim();
+        if (newPassword != null && newPasswordConfirm != null) {
+            if (!newPassword.equals(newPasswordConfirm)) {
+                errorTypeList.add(AccountErrorType.INPUT_PASSWORD_MISMATCH);
+            } else {
+                if (newPassword.length() > PASSWORD_MAX_LENGTH) {
+                    errorTypeList.add(AccountErrorType.INPUT_PASSWORD_TOO_LONG);
+                } else if (newPassword.length() < PASSWORD_MIN_LENGTH) {
+                    errorTypeList.add(AccountErrorType.INPUT_PASSWORD_TOO_SHORT);
+                }
 
-        if (!newPassword.equals(newPasswordConfirm)) {
-            return AccountErrorType.INPUT_PASSWORD_MISMATCH;
+                if (passwordContainsIllegalChar(newPassword)) {
+                    errorTypeList.add(AccountErrorType.INPUT_PASSWORD_CONTAINS_INVALID_CHARACTER);
+                }
+            }
         }
 
-        if (passwordContainsIllegalChar(newPassword)) {
-            return AccountErrorType.INPUT_PASSWORD_CONTAINS_INVALID_CHARACTER;
-        }
-
-        if (passwordContainsIllegalChar(oldPassword)) {
-            return AccountErrorType.INPUT_PASSWORD_CONTAINS_INVALID_CHARACTER;
-        }
-
-        if (newPassword.length() > PASSWORD_MAX_LENGTH) {
-            return AccountErrorType.INPUT_PASSWORD_TOO_LONG;
-        }
-
-        if (newPassword.length() < PASSWORD_MIN_LENGTH) {
-            return AccountErrorType.INPUT_PASSWORD_TOO_SHORT;
-        }
-
-        if (oldPassword.length() > PASSWORD_MAX_LENGTH) {
-            return AccountErrorType.INPUT_PASSWORD_TOO_LONG;
-        }
-
-        if (oldPassword.length() < PASSWORD_MIN_LENGTH) {
-            return AccountErrorType.INPUT_PASSWORD_TOO_SHORT;
-        }
-
-        return ErrorType.NO_ERROR;
+        return errorTypeList;
     }
 
-    public IErrorType userRegisterGetErrorType(
+    public List<IErrorType> userRegisterGetErrors(
             String username,
             String email,
             String emailConfirm,
             String password,
             String passwordConfirm
     ) {
-        IErrorType errorType;
+        List<IErrorType> errorTypeList = new ArrayList<>();
 
         //Check if the email, emailConfirm, password and passwordConfirm are valid inputs
-        errorType = emailPasswordConfirmationGetErrorType(
+        errorTypeList.addAll(emailPasswordConfirmationGetErrors(
                 email,
                 emailConfirm,
                 password,
                 passwordConfirm
-        );
-        if (errorType != ErrorType.NO_ERROR) {
-            return errorType;
-        }
+        ));
 
         //Check if username is a valid input
-        errorType = getUsernameErrorType(username);
-        if (errorType != ErrorType.NO_ERROR) {
-            return errorType;
+        errorTypeList.addAll(getUsernameErrors(username));
+
+        if (email != null && !email.isEmpty()) {
+            if (isEmailTaken(email)) {
+                errorTypeList.add(AccountErrorType.CREATION_EMAIL_TAKEN);
+            }
         }
 
-        if (isEmailTaken(email)) {
-            return AccountErrorType.CREATION_EMAIL_TAKEN;
+        if (username != null && !username.isEmpty()) {
+            if (isUsernameTaken(username)) {
+                errorTypeList.add(AccountErrorType.CREATION_USERNAME_TAKEN);
+            }
         }
 
-        if (isUsernameTaken(username)) {
-            return AccountErrorType.CREATION_USERNAME_TAKEN;
-        }
-
-        return ErrorType.NO_ERROR;
+        return errorTypeList;
     }
 
     /**
@@ -659,113 +653,114 @@ public class UserDAOImpl implements IUserDAO {
      * @param email The string from the HTML form Email input
      * @param password The string from the HTML form Password input
      *
-     * @return If no errors then returns ErrorType.NO_ERROR,
-     *  else it returns a specific error as to why the request failed
+     * @return List of errors in the given parameters
      */
-    private IErrorType getEmailPasswordErrorType(String email, String password) {
+    private List<IErrorType> getEmailPasswordErrors(String email, String password) {
+        List<IErrorType> errorTypeList = new ArrayList<>();
 
+        //Find email errors
         if (email == null || email.isEmpty()) {
-            return AccountErrorType.INPUT_EMAIL_EMPTY;
+            errorTypeList.add(AccountErrorType.INPUT_EMAIL_EMPTY);
+        } else {
+            email = email.trim();
+            if (email.length() > EMAIL_MAX_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_EMAIL_TOO_LONG);
+            }
+
+            if (email.length() < EMAIL_MIN_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_EMAIL_TOO_SHORT);
+            }
+
+            //TODO:: Check for invalid characters
+            if (emailContainsIllegalChar(email)) {
+
+            }
         }
 
+        //Find password errors
         if (password == null || password.isEmpty()) {
-            return AccountErrorType.INPUT_PASSWORD_EMPTY;
+            errorTypeList.add(AccountErrorType.INPUT_PASSWORD_EMPTY);
+        } else {
+            password = password.trim();
+
+            if (password.length() > PASSWORD_MAX_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_PASSWORD_TOO_LONG);
+            }
+
+            if (password.length() < PASSWORD_MIN_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_PASSWORD_TOO_SHORT);
+            }
+
+            //TODO:: Check for invalid characters
+            if (passwordContainsIllegalChar(password)) {
+
+            }
         }
 
-        email = email.trim();
-        password = password.trim();
-
-        if (email.length() > EMAIL_MAX_LENGTH) {
-            return AccountErrorType.INPUT_EMAIL_TOO_LONG;
-        }
-
-        if (email.length() < EMAIL_MIN_LENGTH) {
-            return AccountErrorType.INPUT_EMAIL_TOO_SHORT;
-        }
-
-        if (password.length() > PASSWORD_MAX_LENGTH) {
-            return AccountErrorType.INPUT_PASSWORD_TOO_LONG;
-        }
-
-        if (password.length() < PASSWORD_MIN_LENGTH) {
-            return AccountErrorType.INPUT_PASSWORD_TOO_SHORT;
-        }
-
-        //TODO:: Check for invalid characters
-        if (emailContainsIllegalChar(email)) {
-
-        }
-
-        if (passwordContainsIllegalChar(password)) {
-
-        }
-
-        return ErrorType.NO_ERROR;
+        return errorTypeList;
     }
 
-    private IErrorType getUsernameErrorType(String username) {
+    private List<IErrorType> getUsernameErrors(String username) {
+
+        List<IErrorType> errorTypeList = new ArrayList<>();
 
         if (username == null || username.isEmpty()) {
-            return AccountErrorType.INPUT_USERNAME_EMPTY;
-        }
+            errorTypeList.add(AccountErrorType.INPUT_USERNAME_EMPTY);
+        } else {
+            username = username.trim();
 
-        username = username.trim();
+            if (username.length() > USERNAME_MAX_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_USERNAME_TOO_LONG);
+            }
 
-        if (username.length() > USERNAME_MAX_LENGTH) {
-            return AccountErrorType.INPUT_USERNAME_TOO_LONG;
-        }
-
-        if (username.length() < USERNAME_MIN_LENGTH) {
-            return AccountErrorType.INPUT_USERNAME_TOO_SHORT;
+            if (username.length() < USERNAME_MIN_LENGTH) {
+                errorTypeList.add(AccountErrorType.INPUT_USERNAME_TOO_SHORT);
+            }
         }
 
         //TODO:: Check for invalid characters
 
-        return ErrorType.NO_ERROR;
+        return errorTypeList;
     }
 
     private boolean passwordContainsIllegalChar(String password) {
-
+        //TODO:: This
+        //Don't forget to disallow spaces
 
         return false;
     }
 
     private boolean emailContainsIllegalChar(String email) {
-
+        //TODO:: This
+        //Don't forget to disallow spaces
 
         return false;
     }
 
-    private IErrorType emailPasswordConfirmationGetErrorType(
+    private List<IErrorType> emailPasswordConfirmationGetErrors(
             String email,
             String emailConfirm,
             String password,
             String passwordConfirm
     ) {
-        IErrorType errorType;
+        List<IErrorType> errorTypeList = new ArrayList<>();
 
         //Check the Email and Password are valid inputs
-        errorType = getEmailPasswordErrorType(email, password);
-        if (errorType != ErrorType.NO_ERROR) {
-            return errorType;
-        }
+        errorTypeList.addAll(getEmailPasswordErrors(email, password));
 
         //Check the Email and Password confirmations are valid inputs
-        errorType = getEmailPasswordErrorType(emailConfirm, passwordConfirm);
-        if (errorType != ErrorType.NO_ERROR) {
-            return errorType;
-        }
+        errorTypeList.addAll(getEmailPasswordErrors(emailConfirm, passwordConfirm));
 
         //Check the email and password are the same as the confirmation inputs
         if (!email.equals(emailConfirm)) {
-            return AccountErrorType.INPUT_EMAIL_MISMATCH;
+            errorTypeList.add(AccountErrorType.INPUT_EMAIL_MISMATCH);
         }
 
         if (!password.equals(passwordConfirm)) {
-            return AccountErrorType.INPUT_PASSWORD_MISMATCH;
+            errorTypeList.add(AccountErrorType.INPUT_PASSWORD_MISMATCH);
         }
 
-        return ErrorType.NO_ERROR;
+        return errorTypeList;
     }
 
     /**
@@ -775,24 +770,26 @@ public class UserDAOImpl implements IUserDAO {
      * @param email
      * @param password
      *
-     * @return If no errors then returns ErrorType.NO_ERROR,
-     *      *  else it returns a specific error as to why the request failed
+     * @return List of errors
      */
-    private IErrorType getAccountConnectionErrorType(
+    private List<IErrorType> getAccountConnectionErrors(
             String email,
             String password
     ) {
-        if (!accountExists(email, password)) {
+        List<IErrorType> errorTypeList = new ArrayList<>();
+
+        if (!exists(email, password)) {
             if (isEmailTaken(email)) {
-                return AccountErrorType.INPUT_PASSWORD_INCORRECT;
+                errorTypeList.add(AccountErrorType.INPUT_PASSWORD_INCORRECT);
+            } else {
+                errorTypeList.add(AccountErrorType.LOGIN_NO_CORRESPONDING_ACCOUNT);
             }
-            return AccountErrorType.LOGIN_NO_CORRESPONDING_ACCOUNT;
         }
 
-        return ErrorType.NO_ERROR;
+        return errorTypeList;
     }
 
-    private UserStatus parseUserStatusFromString(String stringValue) {
+    public UserStatus parseUserStatusFromString(String stringValue) {
 
         if (stringValue != null && !stringValue.isEmpty()) {
             for (UserStatus userStatus : UserStatus.values()) {

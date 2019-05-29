@@ -5,16 +5,14 @@ import com.danielohagan.webapp.applayer.utils.JSPFileMap;
 import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 import com.danielohagan.webapp.businesslayer.entities.account.User;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
+import com.danielohagan.webapp.error.ErrorSeverity;
+import com.danielohagan.webapp.error.response.ErrorResponse;
 import com.danielohagan.webapp.error.type.AccountErrorType;
-import com.danielohagan.webapp.error.type.ErrorType;
-import com.danielohagan.webapp.error.type.IErrorType;
 import com.danielohagan.webapp.error.type.SessionErrorType;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
 
 public class AccountChangePasswordCommand extends AbstractCommand {
 
@@ -22,16 +20,14 @@ public class AccountChangePasswordCommand extends AbstractCommand {
     private final String HTML_FORM_NEW_PASSWORD_CONFIRM = "newPasswordConfirm";
     private final String HTML_FORM_OLD_PASSWORD = "oldPassword";
 
-    private final String CHANGE_PASSWORD_SUCCESS_MESSAGE = "Password successfully changed";
-
     @Override
     public void execute(
             HttpServletRequest request,
-            HttpServletResponse response
+            HttpServletResponse response,
+            ErrorResponse errorResponse
     ) {
         UserDAOImpl userDAO = new UserDAOImpl();
         HttpSession httpSession = request.getSession();
-        IErrorType errorType;
 
         if (SessionManager.isLoggedIn(httpSession)) {
             User user = SessionManager.getCurrentUser(httpSession);
@@ -42,70 +38,68 @@ public class AccountChangePasswordCommand extends AbstractCommand {
                 String newPasswordConfirm = request.getParameter(HTML_FORM_NEW_PASSWORD_CONFIRM);
                 String oldPassword = request.getParameter(HTML_FORM_OLD_PASSWORD);
 
-                errorType = userDAO.changePasswordGetErrorType(
+                errorResponse.add(userDAO.changePasswordGetErrors(
                         id,
                         newPassword,
                         newPasswordConfirm,
                         oldPassword
-                );
+                ));
 
-                if (errorType == ErrorType.NO_ERROR) {
+                if (!errorResponse.containsSeverity(ErrorSeverity.MINOR)) {
 
                     userDAO.updatePassword(id, newPassword);
-
-                    setRequestInfo(request, CHANGE_PASSWORD_SUCCESS_MESSAGE);
-
-                    try {
-                        request.getRequestDispatcher(JSPFileMap.ACCOUNT_SETTINGS_JSP)
-                                .forward(request, response);
-                    } catch (ServletException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                } else {
-                    forwardWithError(
+                    errorResponse.add(AccountErrorType.CHANGE_PASSWORD_SUCCESS);
+                    loadPage(
                             request,
                             response,
-                            errorType,
+                            errorResponse,
+                            JSPFileMap.ACCOUNT_SETTINGS_JSP
+                    );
+                } else {
+                    loadPage(
+                            request,
+                            response,
+                            errorResponse,
                             JSPFileMap.ACCOUNT_SETTINGS_JSP
                     );
                 }
 
             } else {
-                forwardWithError(
+                errorResponse.add(SessionErrorType.FAILED_TO_RETRIEVE_CURRENT_USER);
+                loadPage(
                         request,
                         response,
-                        SessionErrorType.FAILED_TO_RETRIEVE_CURRENT_USER,
+                        errorResponse,
                         JSPFileMap.ACCOUNT_SETTINGS_JSP
                 );
             }
         } else {
-            forwardWithError(
+            errorResponse.add(AccountErrorType.NOT_LOGGED_IN);
+            loadPage(
                     request,
                     response,
-                    AccountErrorType.NOT_LOGGED_IN,
+                    errorResponse,
                     JSPFileMap.INDEX_JSP
             );
         }
     }
 
-    private void forwardWithError(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            IErrorType errorType,
-            String requestDispatcher
-    ) {
-        setRequestError(request, errorType);
-
-        try {
-            request.getRequestDispatcher(requestDispatcher)
-                    .forward(request, response);
-        } catch (ServletException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    TODO:: Remove this
+//    private void forwardWithError(
+//            HttpServletRequest request,
+//            HttpServletResponse response,
+//            IErrorType errorType,
+//            String requestDispatcher
+//    ) {
+//        setRequestError(request, errorType);
+//
+//        try {
+//            request.getRequestDispatcher(requestDispatcher)
+//                    .forward(request, response);
+//        } catch (ServletException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

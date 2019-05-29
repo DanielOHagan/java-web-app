@@ -5,37 +5,7 @@
         <title>REGISTER</title>
     </head>
     <body>
-        <nav>
-            <ul>
-                <c:choose>
-                    <c:when test="${sessionScope.loggedIn.equals(\"true\")}">
-                        <jsp:useBean id="currentUser" scope="session" type="com.danielohagan.webapp.businesslayer.entities.account.User"/>
-                        <li>
-                            <a href="${pageContext.request.contextPath}/account/profile?id=${currentUser.id}">
-                                Profile
-                            </a>
-                        </li>
-                        <li>
-                            <a href="${pageContext.request.contextPath}/account/logout">
-                                Log Out
-                            </a>
-                        </li>
-                    </c:when>
-                    <c:otherwise>
-                        <li>
-                            <a href="${pageContext.request.contextPath}/account/login">
-                                Login
-                            </a>
-                        </li>
-                        <li>
-                            <a href="${pageContext.request.contextPath}/account/register">
-                                Register
-                            </a>
-                        </li>
-                    </c:otherwise>
-                </c:choose>
-            </ul>
-        </nav>
+        <jsp:include page="views/nav.jsp" />
         <form name="registerForm" id="registerForm" action="${pageContext.request.contextPath}/account/register" method="post">
             <label for="registerFormUsername">Username:</label>
             <input type="text" name="registerFormUsername" id="registerFormUsername" width="32" />
@@ -58,8 +28,25 @@
             <button type="submit" form="registerForm" value="register">REGISTER</button>
         </form>
 
+        <c:if test="${requestScope.hasInfo.equals(\"true\")}">
+            <h3>INFO</h3>
+            <ul>
+                <c:forEach items="${requestScope.infoList}" var="infoMessage">
+                    <li>
+                        Info: ${infoMessage}
+                    </li>
+                </c:forEach>
+            </ul>
+        </c:if>
         <c:if test="${requestScope.hasError.equals(\"true\")}">
-            <p class="form-error">${requestScope.errorMessage}</p>
+            <h3>ERRORS</h3>
+            <ul>
+                <c:forEach items="${requestScope.errorList}" var="errorMessage">
+                    <li>
+                        Error: ${errorMessage}
+                    </li>
+                </c:forEach>
+            </ul>
         </c:if>
     </body>
 </html>

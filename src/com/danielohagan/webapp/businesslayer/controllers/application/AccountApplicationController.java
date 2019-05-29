@@ -6,15 +6,19 @@ import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
 import com.danielohagan.webapp.businesslayer.commands.ErrorCommand;
 import com.danielohagan.webapp.businesslayer.commands.account.*;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
+import com.danielohagan.webapp.error.ErrorSeverity;
+import com.danielohagan.webapp.error.response.ErrorResponse;
 import com.danielohagan.webapp.error.type.AccountErrorType;
 import com.danielohagan.webapp.error.type.ApplicationControllerErrorType;
 import com.danielohagan.webapp.error.type.ErrorType;
+import com.danielohagan.webapp.error.type.IErrorType;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AccountApplicationController extends AbstractApplicationController {
@@ -38,6 +42,7 @@ public class AccountApplicationController extends AbstractApplicationController 
     private UserDAOImpl mUserDAO;
     private String mKey;
     private Map<String, Class> mCommandMap;
+    private ErrorResponse mAccountErrorResponse;
 
     public AccountApplicationController(
             HttpServletRequest request,
@@ -47,6 +52,7 @@ public class AccountApplicationController extends AbstractApplicationController 
         mResponse = response;
         mCommandMap = new HashMap<>();
         mUserDAO = new UserDAOImpl();
+        mAccountErrorResponse = new ErrorResponse();
 
         mCommandMap.put(DELETE_KEY, AccountDeleteCommand.class);
         mCommandMap.put(LOG_IN_KEY, AccountLogInCommand.class);
@@ -80,15 +86,22 @@ public class AccountApplicationController extends AbstractApplicationController 
                 command = new AccountDeleteCommand();
                 break;
             default:
-                command = new ErrorCommand();
-                command.setRequestError(
-                        mRequest,
+                command = null;
+                mAccountErrorResponse.add(
                         ApplicationControllerErrorType.COMMAND_CLASS_NOT_FOUND
+                );
+
+                new ErrorCommand().execute(
+                        mRequest,
+                        mResponse,
+                        mAccountErrorResponse
                 );
                 break;
         }
 
-        command.execute(mRequest, mResponse);
+        if (command != null) {
+            command.execute(mRequest, mResponse, mAccountErrorResponse);
+        }
     }
 
     @Override
@@ -98,76 +111,82 @@ public class AccountApplicationController extends AbstractApplicationController 
 
         try {
             if (mKey == null) {
-                mRequest.setAttribute(
-                        REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                        ErrorType.HTTP_RESPONSE_CODE_404
-                );
+                mAccountErrorResponse.add(ErrorType.HTTP_RESPONSE_CODE_404);
 
-                mRequest.getRequestDispatcher(JSPFileMap.ERROR_JSP)
-                        .forward(mRequest, mResponse);
+                new ErrorCommand().execute(mRequest, mResponse, mAccountErrorResponse);
             } else {
                 switch (mKey) {
                     case PROFILE_KEY:
-
-                        setProfilePageAttribs();
-
-                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_PROFILE_JSP)
-                                .forward(mRequest, mResponse);
+                        loadProfilePage();
                         break;
                     case LOG_IN_KEY:
-
-                        //Forward the user to Home if they are already logged in
-                        // (They shouldn't be given a link to the login page if they are already logged in)
-
                         if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                            mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                                    .forward(mRequest, mResponse);
+                            mAccountErrorResponse.add(AccountErrorType.ALREADY_LOGGED_IN);
+                            loadPage(
+                                    mRequest,
+                                    mResponse,
+                                    mAccountErrorResponse,
+                                    JSPFileMap.INDEX_JSP
+                            );
                         } else {
-                            mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_LOG_IN_PAGE)
-                                    .forward(mRequest, mResponse);
+                            loadPage(
+                                    mRequest,
+                                    mResponse,
+                                    mAccountErrorResponse,
+                                    JSPFileMap.ACCOUNT_LOG_IN_PAGE
+                            );
                         }
                         break;
                     case LOG_OUT_KEY:
-                        //Log out the user if key is LOG_OUT and user is logged in
                         if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                            AccountLogOutCommand command = new AccountLogOutCommand();
-                            command.execute(mRequest, mResponse);
+                            new AccountLogOutCommand().execute(mRequest, mResponse, mAccountErrorResponse);
                         } else {
+                            //TODO:: Test: I think this will send the user back to the page they were on
                             mResponse.sendRedirect(mRequest.getContextPath());
                         }
                         break;
                     case SETTINGS_KEY:
-
                         if (SessionManager.isLoggedIn(mRequest.getSession())) {
-                            mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_SETTINGS_JSP)
-                                    .forward(mRequest, mResponse);
-                        } else {
-                            mRequest.setAttribute(
-                                    REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                                    AccountErrorType.NOT_LOGGED_IN
+                            loadPage(
+                                    mRequest,
+                                    mResponse,
+                                    mAccountErrorResponse,
+                                    JSPFileMap.ACCOUNT_SETTINGS_JSP
                             );
-
-                            mRequest.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                                    .forward(mRequest, mResponse);
-
+                        } else {
+                            mAccountErrorResponse.add(AccountErrorType.NOT_LOGGED_IN);
+                            loadPage(
+                                    mRequest,
+                                    mResponse,
+                                    mAccountErrorResponse,
+                                    JSPFileMap.INDEX_JSP
+                            );
                         }
                         break;
                     case REGISTER_KEY:
-                        mRequest.getRequestDispatcher(JSPFileMap.ACCOUNT_REGISTER_JSP)
-                                .forward(mRequest, mResponse);
+                        if (SessionManager.isLoggedIn(mRequest.getSession())) {
+                            mAccountErrorResponse.add(AccountErrorType.ALREADY_LOGGED_IN);
+                            loadPage(
+                                    mRequest,
+                                    mResponse,
+                                    mAccountErrorResponse,
+                                    mRequest.getContextPath()
+                            );
+                        } else {
+                            loadPage(
+                                    mRequest,
+                                    mResponse,
+                                    mAccountErrorResponse,
+                                    JSPFileMap.ACCOUNT_REGISTER_JSP
+                            );
+                        }
                         break;
                     default:
-                        mRequest.setAttribute(
-                                REQUEST_ATTRIBUTE_ERROR_MESSAGE,
-                                ErrorType.HTTP_RESPONSE_CODE_404
-                        );
-                        mRequest.getRequestDispatcher(JSPFileMap.ERROR_JSP)
-                                .forward(mRequest, mResponse);
+                        mAccountErrorResponse.add(ErrorType.HTTP_RESPONSE_CODE_404);
+                        new ErrorCommand().execute(mRequest, mResponse, mAccountErrorResponse);
                         break;
                 }
             }
-        } catch (ServletException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -194,12 +213,80 @@ public class AccountApplicationController extends AbstractApplicationController 
         }
     }
 
-    private void setProfilePageAttribs() {
-        int userId = Integer.parseInt(mRequest.getParameter(URL_PARAM_ID));
-
+    private void setProfilePageAttribs(int userId) {
         mRequest.setAttribute(
                 REQUEST_ATTRIB_PROFILE_USER,
                 mUserDAO.getById(userId)
         );
+    }
+
+    private List<IErrorType> userIdGetErrors(Integer userId) {
+        List<IErrorType> errorTypeList = new ArrayList<>();
+
+        if (userId == null) {
+            errorTypeList.add(AccountErrorType.NO_USER_ID);
+        } else {
+            if (userId < 0) {
+                errorTypeList.add(AccountErrorType.ID_NOT_NEGATIVE);
+            } else {
+                if (!mUserDAO.exists(userId)) {
+                    errorTypeList.add(AccountErrorType.DOES_NOT_EXIST);
+                }
+            }
+        }
+
+        return errorTypeList;
+    }
+
+    private List<IErrorType> requestParamIdGetErrors(String requestParamId) {
+        List<IErrorType> errorTypeList = new ArrayList<>();
+
+        if (requestParamId == null || (requestParamId != null && requestParamId.isEmpty())) {
+            errorTypeList.add(AccountErrorType.NO_USER_ID);
+
+        } else {
+            if (!requestParamId.matches("[0-9]+")) {
+                errorTypeList.add(AccountErrorType.ID_NUMERIC_ONLY);
+            }
+        }
+
+        //Maybe add a decimal check, however, it might not be necessary because int will truncate the value
+
+        return errorTypeList;
+    }
+
+    private void  loadProfilePage() {
+        if (!mAccountErrorResponse.contains(AccountErrorType.NO_USER_ID)) {
+            String userIdString = mRequest.getParameter(URL_PARAM_ID);
+            mAccountErrorResponse.add(
+                    requestParamIdGetErrors(userIdString)
+            );
+
+            if (!mAccountErrorResponse.containsSeverity(ErrorSeverity.MINOR)) {
+                Integer userId = Integer.parseInt(userIdString);
+
+                ErrorResponse idIntegerErrorResponse = new ErrorResponse();
+                idIntegerErrorResponse.add(
+                        userIdGetErrors(userId)
+                );
+                mAccountErrorResponse.add(idIntegerErrorResponse.getErrorList());
+
+                if (!idIntegerErrorResponse.containsSeverity(ErrorSeverity.MINOR)) {
+                    setProfilePageAttribs(userId);
+                    loadPage(
+                            mRequest,
+                            mResponse,
+                            mAccountErrorResponse,
+                            JSPFileMap.ACCOUNT_PROFILE_JSP
+                    );
+                } else {
+                    new ErrorCommand().execute(mRequest, mResponse, mAccountErrorResponse);
+                }
+            } else {
+                new ErrorCommand().execute(mRequest, mResponse, mAccountErrorResponse);
+            }
+        } else {
+            new ErrorCommand().execute(mRequest, mResponse, mAccountErrorResponse);
+        }
     }
 }

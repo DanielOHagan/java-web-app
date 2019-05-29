@@ -1,8 +1,11 @@
 package com.danielohagan.webapp.applayer.session;
 
 import com.danielohagan.webapp.businesslayer.entities.account.User;
+import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
+import com.danielohagan.webapp.businesslayer.entities.chat.Message;
 
 import javax.servlet.http.HttpSession;
+import java.util.List;
 
 public class SessionManager {
 
@@ -10,11 +13,15 @@ public class SessionManager {
     private static final String FALSE = "false";
     private static final String LOGGED_IN = "loggedIn";
     private static final String ATTRIBUTE_USER = "currentUser";
+    private static final String ATTRIBUTE_CHAT_SESSION_LIST = "chatSessionList";
+    private static final String ATTRIBUTE_CHAT_SESSION_MESSAGE_LIST = "chatSessionMessageList";
+    private static final String ATTRIBUTE_PRIMARY_CHAT_SESSION = "primaryChatSession";
 
     //Time before user is logged out for inactivity, in seconds
     private static final int MAX_INACTIVE_INTERVAL = 3_600;
 
-    public static void logInUser(
+
+    public static void setCurrentUser(
             HttpSession httpSession,
             User user
     ) {
@@ -31,7 +38,7 @@ public class SessionManager {
         return false;
     }
 
-    public static void logOutUser(HttpSession httpSession) {
+    public static void removeCurrentUser(HttpSession httpSession) {
         httpSession.setAttribute(LOGGED_IN, FALSE);
         httpSession.removeAttribute(ATTRIBUTE_USER);
     }
@@ -47,5 +54,45 @@ public class SessionManager {
     public static void setDefault(HttpSession httpSession) {
         httpSession.setAttribute(LOGGED_IN, FALSE);
         httpSession.removeAttribute(ATTRIBUTE_USER);
+    }
+
+    public static void setChatSessionList(
+            HttpSession httpSession,
+            List<ChatSession> chatSessionList
+    ) {
+        httpSession.setAttribute(
+                ATTRIBUTE_CHAT_SESSION_LIST,
+                chatSessionList
+        );
+    }
+
+    public static void setPrimaryChatSessionMessageList(
+            HttpSession httpSession,
+            List<Message> sessionMessages
+    ) {
+        httpSession.setAttribute(
+                ATTRIBUTE_CHAT_SESSION_MESSAGE_LIST,
+                sessionMessages
+        );
+    }
+
+    public static void setPrimaryChatSession(
+            HttpSession httpSession,
+            ChatSession primaryChatSession
+    ) {
+        httpSession.setAttribute(
+                ATTRIBUTE_PRIMARY_CHAT_SESSION,
+                primaryChatSession
+        );
+        setPrimaryChatSessionMessageList(
+                httpSession,
+                primaryChatSession.getMessageList()
+        );
+    }
+
+    public static void setPrimaryChatSessionToDefault(
+            HttpSession httpSession
+    ) {
+        httpSession.removeAttribute(ATTRIBUTE_PRIMARY_CHAT_SESSION);
     }
 }

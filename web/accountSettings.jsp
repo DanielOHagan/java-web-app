@@ -6,20 +6,7 @@
     <title>${currentUser.username} | SETTINGS</title>
 </head>
     <body>
-        <nav>
-            <ul>
-                <li>
-                    <a href="${pageContext.request.contextPath}/account/profile?id=${currentUser.id}">
-                        Profile
-                    </a>
-                </li>
-                <li>
-                    <a href="${pageContext.request.contextPath}/account/logout">
-                        Log Out
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <jsp:include page="views/nav.jsp" />
         <h2>Change Password</h2>
         <form name="changePasswordForm" id="changePasswordForm" action="${pageContext.request.contextPath}/account/change-password" method="post">
             <label for="newPassword">New Password:</label>
@@ -37,19 +24,32 @@
         <br />
         <br />
         <form name="deleteAccountForm" id="deleteAccountForm" action="${pageContext.request.contextPath}/account/delete" method="post">
-            <label for="deleteAccountPassword">Old Password:</label>
+            <label for="deleteAccountPassword">Password:</label>
             <input type="password" name="deleteAccountPassword" id="deleteAccountPassword" width="32" />
             <br />
             <br />
             <button type="submit" form="deleteAccountForm" value="deleteAccount">DELETE ACCOUNT</button>
         </form>
 
-        <c:if test="${requestScope.hasError.equals(\"true\")}">
-            <p>${requestScope.errorMessage}</p>
-        </c:if>
-
         <c:if test="${requestScope.hasInfo.equals(\"true\")}">
-            <p>${requestScope.infoMessage}</p>
+            <h3>INFO</h3>
+            <ul>
+                <c:forEach items="${requestScope.infoList}" var="infoMessage">
+                    <li>
+                        Info: ${infoMessage}
+                    </li>
+                </c:forEach>
+            </ul>
+        </c:if>
+        <c:if test="${requestScope.hasError.equals(\"true\")}">
+            <h3>ERRORS</h3>
+            <ul>
+                <c:forEach items="${requestScope.errorList}" var="errorMessage">
+                    <li>
+                        Error: ${errorMessage}
+                    </li>
+                </c:forEach>
+            </ul>
         </c:if>
     </body>
 </html>

@@ -1,6 +1,6 @@
-package com.danielohagan.webapp.datalayer.dao.interfaces;
+package com.danielohagan.webapp.datalayer.dao.databaseenums;
 
-public interface IDatabaseEnum<T> {
+public interface IDatabaseEnum {
 
     //Return the value of the corresponding Database enum
     String getDatabaseEnumStringValue();

@@ -3,14 +3,14 @@ package com.danielohagan.webapp.businesslayer.commands.account;
 import com.danielohagan.webapp.applayer.session.SessionManager;
 import com.danielohagan.webapp.applayer.utils.JSPFileMap;
 import com.danielohagan.webapp.businesslayer.commands.AbstractCommand;
+import com.danielohagan.webapp.datalayer.dao.implementations.ChatSessionDAOImpl;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
+import com.danielohagan.webapp.error.response.ErrorResponse;
 import com.danielohagan.webapp.error.type.AccountErrorType;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
 
 public class AccountDeleteCommand extends AbstractCommand {
 
@@ -19,9 +19,11 @@ public class AccountDeleteCommand extends AbstractCommand {
     @Override
     public void execute(
             HttpServletRequest request,
-            HttpServletResponse response
+            HttpServletResponse response,
+            ErrorResponse errorResponse
     ) {
         UserDAOImpl userDAO = new UserDAOImpl();
+        ChatSessionDAOImpl chatSessionDAO = new ChatSessionDAOImpl();
         HttpSession httpSession = request.getSession();
         String password = request.getParameter(HTML_FORM_PASSWORD);
 
@@ -31,26 +33,22 @@ public class AccountDeleteCommand extends AbstractCommand {
 
             if (userDAO.isCorrectPassword(id, password)) {
                 userDAO.deleteUser(id);
+
+                //TODO:: Delete from Chat Sessions
+            } else {
+                errorResponse.add(AccountErrorType.INPUT_PASSWORD_INCORRECT);
             }
 
             if (userDAO.getById(id) != null) {
-                setRequestError(request, AccountErrorType.DELETION_FAILED);
+                errorResponse.add(AccountErrorType.DELETION_FAILED);
             } else {
                 //Remove session attributes
                 SessionManager.setDefault(httpSession);
             }
-
         } else {
-            setRequestError(request, AccountErrorType.NOT_LOGGED_IN);
+            errorResponse.add(AccountErrorType.NOT_LOGGED_IN);
         }
 
-        try {
-            request.getRequestDispatcher(JSPFileMap.INDEX_JSP)
-                    .forward(request, response);
-        } catch (ServletException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        loadPage(request, response, errorResponse, JSPFileMap.INDEX_JSP);
     }
 }

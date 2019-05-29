@@ -1,11 +1,9 @@
 package com.danielohagan.webapp.businesslayer.entities.account;
 
 import com.danielohagan.webapp.businesslayer.entities.IEntity;
-import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
 import com.danielohagan.webapp.datalayer.dao.databaseenums.UserStatus;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class User implements IEntity {
 
@@ -13,7 +11,6 @@ public class User implements IEntity {
     private String mEmail;
     private String mUsername;
     private UserStatus mUserStatus;
-    private List<ChatSession> mChatSessionList;
     private LocalDateTime mCreationTime;
 
     public User() {}
@@ -68,4 +65,5 @@ public class User implements IEntity {
     public void setCreationTime(LocalDateTime creationTime) {
         mCreationTime = creationTime;
     }
+
 }

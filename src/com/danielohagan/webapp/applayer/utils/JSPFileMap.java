@@ -9,4 +9,6 @@ public class JSPFileMap {
     public static final String ACCOUNT_PROFILE_JSP = "/profile.jsp";
     public static final String ACCOUNT_REGISTER_JSP = "/register.jsp";
     public static final String ACCOUNT_SETTINGS_JSP = "/accountSettings.jsp";
+
+    public static final String CHAT_CENTRE_JSP = "/chatCentre.jsp";
 }
