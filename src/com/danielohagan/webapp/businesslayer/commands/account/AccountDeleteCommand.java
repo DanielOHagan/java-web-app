@@ -33,8 +33,6 @@ public class AccountDeleteCommand extends AbstractCommand {
 
             if (userDAO.isCorrectPassword(id, password)) {
                 userDAO.deleteUser(id);
-
-                //TODO:: Delete from Chat Sessions
             } else {
                 errorResponse.add(AccountErrorType.INPUT_PASSWORD_INCORRECT);
             }

@@ -34,6 +34,10 @@ public class User implements IEntity {
         return mId;
     }
 
+    public void setId(int id) {
+        mId = id;
+    }
+
     public String getEmail() {
         return mEmail;
     }

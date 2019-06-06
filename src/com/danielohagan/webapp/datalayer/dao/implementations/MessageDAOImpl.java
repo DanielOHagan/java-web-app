@@ -10,23 +10,148 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MessageDAOImpl implements IMessageDAO {
 
+    //TODO: Environment Variables
+
+    public static final String MESSAGE_TABLE_NAME = "message_table";
+    public static final String ID_COLUMN_NAME = "message_id";
+    public static final String SENDER_ID_COLUMN_NAME = "message_sender_id";
+    public static final String CHAT_SESSION_ID_COLUMN_NAME = "message_chat_session_id";
+    public static final String BODY_COLUMN_NAME = "message_body";
+    public static final String CREATION_TIME_COLUMN_NAME = "message_creation_time";
+
     @Override
     public Message getById(int id) {
-        return null;
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
+        Message message = null;
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            message = generateMessage(resultSet);
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return message;
+    }
+
+    @Override
+    public boolean exists(int id) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "SELECT " +
+                        ID_COLUMN_NAME +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
+        boolean exists = false;
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            exists = resultSet.next();
+
+            preparedStatement.close();
+            resultSet.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return exists;
     }
 
     @Override
     public void createNewMessage(Message message) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "INSERT INTO " +
+                    MESSAGE_TABLE_NAME + " (" +
+                        ID_COLUMN_NAME + ", " +
+                        SENDER_ID_COLUMN_NAME + ", " +
+                        CHAT_SESSION_ID_COLUMN_NAME + ", " +
+                        BODY_COLUMN_NAME + ", " +
+                        CREATION_TIME_COLUMN_NAME +
+                    ")" +
+                " VALUES (?, ?, ?, ?, ?);";
 
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, message.getId());
+            preparedStatement.setInt(2, message.getSenderId());
+            preparedStatement.setInt(3, message.getChatSessionId());
+            preparedStatement.setString(4, message.getBody());
+            preparedStatement.setObject(5, message.getCreationTime());
+
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void deleteMessage(int sessionId, int messageId) {
+    public void updateMessageBody(int messageId, String body) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "UPDATE " +
+                        MESSAGE_TABLE_NAME +
+                " SET " +
+                        BODY_COLUMN_NAME + " = ?" +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
 
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement)) {
+            preparedStatement.setString(1, body);
+            preparedStatement.setInt(2, messageId);
+
+            preparedStatement.execute();
+
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Delete a single message
+     *
+     * @param messageId ID of the message to delete
+     */
+    @Override
+    public void deleteMessage(int messageId) {
+        deleteColumnRowsById(ID_COLUMN_NAME, messageId);
     }
 
     /**
@@ -36,8 +161,45 @@ public class MessageDAOImpl implements IMessageDAO {
      * @param userId The target User ID
      */
     @Override
-    public void deleteMessageByUser(int sessionId, int userId) {
+    public void deleteSessionMessageByUser(int sessionId, int userId) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "DELETE *" +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        CHAT_SESSION_ID_COLUMN_NAME + " = ?" +
+                " AND " +
+                        SENDER_ID_COLUMN_NAME + " = ?;";
 
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+
+            preparedStatement.setInt(1, sessionId);
+            preparedStatement.setInt(2, userId);
+
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void deleteMessageBySession(int sessionId) {
+        deleteColumnRowsById(CHAT_SESSION_ID_COLUMN_NAME, sessionId);
+    }
+
+    /**
+     * Delete every message sent by a User
+     *
+     * @param userId The target User ID
+     */
+    @Override
+    public void deleteMessageByUser(int userId) {
+        deleteColumnRowsById(SENDER_ID_COLUMN_NAME, userId);
     }
 
     @Override
@@ -48,24 +210,244 @@ public class MessageDAOImpl implements IMessageDAO {
         return getMessageList(connection, sessionId);
     }
 
+    /**
+     * Get all of the message a User has sent to a chat session
+     *
+     * @param sessionId The ID of the Chat session to search
+     * @param userId The ID of the User
+     *
+     * @return List of messages that have been sent to the specified
+     *         chat session by the specified user
+     */
     @Override
-    public List<Message> getMessageListByUser(int sessionId, int userId) {
-        return null;
+    public List<Message> getChatSessionMessageListByUser(
+            int sessionId,
+            int userId
+    ) {
+        List<Message> messageList = new ArrayList<>();
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        CHAT_SESSION_ID_COLUMN_NAME + " = ?" +
+                " AND " +
+                        SENDER_ID_COLUMN_NAME + " = ?;";
+
+        try(
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+
+            preparedStatement.setInt(1, sessionId);
+            preparedStatement.setInt(2, userId);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            messageList = generateMessageList(resultSet);
+
+            preparedStatement.close();
+            connection.close();
+            resultSet.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return messageList;
     }
 
     /**
+     * Get all Messages from a Chat Session sent
+     *  before a specified time
      *
-     * @param connection
+     * @param sessionId The Chat Session
+     * @param time The time
+     *
+     * @return List of Messages sent to the session before the specified time
+     */
+    @Override
+    public List<Message> getChatSessionMessageListBeforeTime(
+            int sessionId,
+            LocalDateTime time
+    ) {
+        List<Message> messageList = new ArrayList<>();
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        CHAT_SESSION_ID_COLUMN_NAME + " = ?" +
+                " AND " +
+                        CREATION_TIME_COLUMN_NAME + " < ?" +
+                " ORDER BY " +
+                        "-" + CREATION_TIME_COLUMN_NAME + ";";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, sessionId);
+            preparedStatement.setObject(2, time);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            messageList = generateMessageList(resultSet);
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return messageList;
+    }
+
+    /**
+     * Get a number of Messages from a Chat Session sent before a specified time
+     *
      * @param sessionId
+     * @param time
+     * @param messageCount
      *
      * @return
      */
-    private List<Message> getMessageList(Connection connection, int sessionId) {
-        List<Message> messageList = null;
+    @Override
+    public List<Message> getChatSessionMessageListBeforeTime(
+            int sessionId,
+            LocalDateTime time,
+            int messageCount
+    ) {
+        List<Message> messageList = new ArrayList<>();
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT *" +
-                        " FROM " + "message_table" +
-                        " WHERE " + "message_chat_session_id" + "= ?";
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        CHAT_SESSION_ID_COLUMN_NAME + " = ?" +
+                " AND " +
+                        CREATION_TIME_COLUMN_NAME + " < ?" +
+                " ORDER BY " +
+                        "-" + CREATION_TIME_COLUMN_NAME +
+                " LIMIT " +
+                        " ? " + ";";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, sessionId);
+            preparedStatement.setObject(2, time);
+            preparedStatement.setInt(3, messageCount);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            messageList = generateMessageList(resultSet);
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return messageList;
+    }
+
+    @Override
+    public Map<String, String> getColumnStringsById(
+            int id,
+            String... columnNames
+    ) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        Map<String, String> columnStringsMap = new HashMap<>();
+        String sqlStatement = buildSelectByIdSqlRequest(columnNames);
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (columnNames.length > 0) {
+                for (String columnName : columnNames) {
+                    columnStringsMap.put(
+                            columnName,
+                            resultSet.getString(columnName)
+                    );
+                }
+            }
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return columnStringsMap;
+    }
+
+    @Override
+    public Map<String, Integer> getColumnIntegersById(
+            int id,
+            String... columnNames
+    ) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        Map<String, Integer> columnIntegerMap = new HashMap<>();
+        String sqlStatement = buildSelectByIdSqlRequest(columnNames);
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement.toString())
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (columnNames.length > 0) {
+                for (String columnName : columnNames) {
+                    columnIntegerMap.put(
+                            columnName,
+                            resultSet.getInt(columnName)
+                    );
+                }
+            }
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return columnIntegerMap;
+    }
+
+    /**
+     * Get all of the messages that have been sent to a chat session
+     *
+     * @param connection Database Connection object
+     * @param sessionId Chat Session ID
+     *
+     * @return List of all messages from a Chat Session
+     */
+    private List<Message> getMessageList(Connection connection, int sessionId) {
+        List<Message> messageList = new ArrayList<>();
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        CHAT_SESSION_ID_COLUMN_NAME + "= ?";
 
         if (connection != null) {
             try (
@@ -76,12 +458,12 @@ public class MessageDAOImpl implements IMessageDAO {
                 preparedStatement.setInt(1, sessionId);
 
                 ResultSet resultSet = preparedStatement.executeQuery();
-
                 messageList = generateMessageList(resultSet);
 
                 //Clean Up
                 preparedStatement.close();
                 resultSet.close();
+                connection.close();
 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -103,22 +485,82 @@ public class MessageDAOImpl implements IMessageDAO {
 
         try {
             while (resultSet.next()) {
-                messageList.add(new Message(
-                        resultSet.getInt("message_id"),
-                        resultSet.getInt("message_sender_id"),
-                        resultSet.getInt("message_chat_session_id"),
-                        resultSet.getString("message_body"),
-                        resultSet.getObject("message_creation_time", LocalDateTime.class)
-                ));
+                messageList.add(generateMessage(resultSet));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        if (messageList.isEmpty()) {
-            messageList = null;
+        return messageList;
+    }
+
+    private Message generateMessage(ResultSet resultSet) {
+        try {
+            return new Message(
+                    resultSet.getInt(ID_COLUMN_NAME),
+                    resultSet.getInt(SENDER_ID_COLUMN_NAME),
+                    resultSet.getInt(CHAT_SESSION_ID_COLUMN_NAME),
+                    resultSet.getString(BODY_COLUMN_NAME),
+                    resultSet.getObject(
+                            CREATION_TIME_COLUMN_NAME,
+                            LocalDateTime.class
+                    )
+            );
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        return messageList;
+        return null;
+    }
+
+    private void deleteColumnRowsById(String column, int id) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "DELETE *" +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        column + " = ?;";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String buildSelectByIdSqlRequest(String... columnNames) {
+        StringBuilder sqlStatementBuilder = null;
+        String sqlStatement = null;
+
+        sqlStatementBuilder = new StringBuilder(
+                "SELECT "
+        );
+
+        for (int i = 0; i < columnNames.length; i++) {
+            sqlStatementBuilder.append(columnNames[i]);
+            if (i < columnNames.length - 1) {
+                sqlStatementBuilder.append(", ");
+            } else {
+                sqlStatementBuilder.append(" ");
+            }
+        }
+
+        sqlStatementBuilder.append(
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;"
+        );
+
+        sqlStatement = sqlStatementBuilder.toString();
+
+        return sqlStatement;
     }
 }

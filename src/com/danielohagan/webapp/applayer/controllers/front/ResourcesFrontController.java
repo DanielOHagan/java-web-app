@@ -1,19 +1,16 @@
 package com.danielohagan.webapp.applayer.controllers.front;
 
-import com.danielohagan.webapp.businesslayer.controllers.application.HomeApplicationController;
-
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet(
-        name = "HomeFrontController",
-        urlPatterns = /*{*/"/home"/*, "/"}*/
-)
-public class HomeFrontController extends HttpServlet {
+//@WebServlet(
+//        name = "ResourcesFrontController",
+//        //urlPatterns = {"/res/*"}
+//)
+public class ResourcesFrontController extends HttpServlet {
 
     protected void doPost(
             HttpServletRequest request,
@@ -29,9 +26,15 @@ public class HomeFrontController extends HttpServlet {
             HttpServletRequest request,
             HttpServletResponse response
     ) throws ServletException, IOException {
-        //TODO:: Filter validation
+
+        if (request.getRequestURI().contains(".")) {
+            String filePath = request.getRequestURI()
+                    .replaceFirst(request.getContextPath(), "");
 
 
-        new HomeApplicationController(request, response).processGet();
+            System.out.println(filePath);
+            request.getRequestDispatcher(filePath)
+                    .forward(request, response);
+        }
     }
 }

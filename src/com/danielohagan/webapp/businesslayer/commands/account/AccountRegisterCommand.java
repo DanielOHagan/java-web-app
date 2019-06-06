@@ -9,6 +9,7 @@ import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
 import com.danielohagan.webapp.error.ErrorSeverity;
 import com.danielohagan.webapp.error.response.ErrorResponse;
 import com.danielohagan.webapp.error.type.AccountErrorType;
+import com.danielohagan.webapp.utils.Random;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,9 +47,18 @@ public class AccountRegisterCommand extends AbstractCommand {
                 passwordConfirm
         ));
 
-        if (errorResponse.highestSeverity() == ErrorSeverity.MINOR) {
+        if (!errorResponse.containsSeverity(ErrorSeverity.MINOR)) {
             //Create and store the user
             User user = new User();
+
+            int id = Random.generateRandomPositiveInt();
+
+            while (userDAO.exists(id)) {
+                id = Random.generateRandomPositiveInt();
+            }
+
+            user.setId(id);
+
             user.setEmail(email);
             user.setUsername(username);
             user.setUserStatus(UserStatus.NEW);

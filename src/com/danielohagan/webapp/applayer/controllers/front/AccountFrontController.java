@@ -9,7 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet(name = "AccountFrontController", urlPatterns = "/account/*")
+@WebServlet(
+        name = "AccountFrontController",
+        urlPatterns = "/account/*"
+)
 public class AccountFrontController extends HttpServlet {
     protected void doPost(
             HttpServletRequest request,

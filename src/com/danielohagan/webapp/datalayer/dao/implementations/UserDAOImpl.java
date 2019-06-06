@@ -7,12 +7,17 @@ import com.danielohagan.webapp.datalayer.database.DatabaseConnection;
 import com.danielohagan.webapp.error.type.AccountErrorType;
 import com.danielohagan.webapp.error.type.IErrorType;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class  UserDAOImpl implements IUserDAO {
+public class UserDAOImpl implements IUserDAO {
 
     private static final String SYSTEM_JDBC_ACCOUNT_TABLE_NAME =
             "JDBC_ACCOUNT_TABLE_NAME";
@@ -50,6 +55,7 @@ public class  UserDAOImpl implements IUserDAO {
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int USERNAME_MAX_LENGTH = 32;
     public static final int USERNAME_MIN_LENGTH = 6;
+
 
     @Override
     public User getById(int id) {
@@ -121,10 +127,17 @@ public class  UserDAOImpl implements IUserDAO {
     public void createNewUser(User user, String password) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
-        String sqlStatement = "INSERT INTO " + ACCOUNT_TABLE_NAME + " (" +
-                EMAIL_COLUMN_NAME + ", " + USERNAME_COLUMN_NAME + ", " +
-                PASSWORD_COLUMN_NAME + ", " + STATUS_COLUMN_NAME + ")" +
-                " VALUES (?, ?, ?, ?);";
+        String sqlStatement =
+                "INSERT INTO " +
+                        ACCOUNT_TABLE_NAME +
+                        " (" +
+                            ID_COLUMN_NAME + ", " +
+                            EMAIL_COLUMN_NAME + ", " +
+                            USERNAME_COLUMN_NAME + ", " +
+                            PASSWORD_COLUMN_NAME + ", " +
+                            STATUS_COLUMN_NAME +
+                        ")" +
+                " VALUES (?, ?, ?, ?, ?);";
 
         if (connection != null) {
             try(
@@ -133,11 +146,12 @@ public class  UserDAOImpl implements IUserDAO {
             ) {
 
                 //Insert data into prepared statement
-                preparedStatement.setString(1, user.getEmail());
-                preparedStatement.setString(2, user.getUsername());
-                preparedStatement.setString(3, password);
+                preparedStatement.setInt(1, user.getId());
+                preparedStatement.setString(2, user.getEmail());
+                preparedStatement.setString(3, user.getUsername());
+                preparedStatement.setString(4, password);
                 preparedStatement.setString(
-                        4,
+                        5,
                         user.getUserStatus().getDatabaseEnumStringValue()
                 );
 
@@ -157,8 +171,11 @@ public class  UserDAOImpl implements IUserDAO {
     public void deleteUser(int id) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
-        String sqlStatement = "DELETE FROM " + ACCOUNT_TABLE_NAME +
-                " WHERE " + ID_COLUMN_NAME + " = ?;";
+        String sqlStatement =
+                "DELETE FROM "
+                        + ACCOUNT_TABLE_NAME +
+                " WHERE "
+                        + ID_COLUMN_NAME + " = ?;";
 
         if (connection != null) {
             try (
@@ -172,14 +189,22 @@ public class  UserDAOImpl implements IUserDAO {
                 e.printStackTrace();
             }
         }
+
+        //TODO:: Remove from Chat Sessions Links
+
+        //TODO:: Delete Messages
     }
 
     @Override
     public boolean exists(int id) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
-        String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                " WHERE " + ID_COLUMN_NAME + " = ?;";
+        String sqlStatement =
+                "SELECT *" +
+                " FROM "
+                        + ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
 
         if (connection != null) {
             try (
@@ -206,12 +231,90 @@ public class  UserDAOImpl implements IUserDAO {
     }
 
     @Override
+    public Map<String, String> getColumnStringsById(
+            int id,
+            String... columnNames
+    ) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        Map<String, String> columnStringsMap = new HashMap<>();
+        String sqlStatement = buildSelectByIdSqlRequest(columnNames);
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (columnNames.length > 0) {
+                for (String columnName : columnNames) {
+                    columnStringsMap.put(
+                            columnName,
+                            resultSet.getString(columnName)
+                    );
+                }
+            }
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return columnStringsMap;
+    }
+
+    @Override
+    public Map<String, Integer> getColumnIntegersById(
+            int id,
+            String... columnNames
+    ) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        Map<String, Integer> columnIntegerMap = new HashMap<>();
+        String sqlStatement = buildSelectByIdSqlRequest(columnNames);
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement.toString())
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (columnNames.length > 0) {
+                for (String columnName : columnNames) {
+                    columnIntegerMap.put(
+                            columnName,
+                            resultSet.getInt(columnName)
+                    );
+                }
+            }
+
+            resultSet.close();
+            preparedStatement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return columnIntegerMap;
+    }
+
+    @Override
     public boolean isCorrectPassword(int id, String password) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
-        String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                " WHERE " + ID_COLUMN_NAME + " = ? AND " +
-                PASSWORD_COLUMN_NAME + " = ?;";
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " + ID_COLUMN_NAME + " = ?" +
+                " AND " +
+                        PASSWORD_COLUMN_NAME + " = ?;";
 
         if (connection != null) {
             try (
@@ -243,8 +346,13 @@ public class  UserDAOImpl implements IUserDAO {
     public void updateUserStatus(int id, UserStatus userStatus) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
-        String sqlStatement = "UPDATE " + ACCOUNT_TABLE_NAME + " SET " +
-                STATUS_COLUMN_NAME + " = ? WHERE " + ID_COLUMN_NAME + " = ?;";
+        String sqlStatement =
+                "UPDATE " +
+                        ACCOUNT_TABLE_NAME +
+                " SET " +
+                        STATUS_COLUMN_NAME + " = ? " +
+                "WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
 
         if (connection != null) {
             try (
@@ -291,32 +399,34 @@ public class  UserDAOImpl implements IUserDAO {
     }
 
     /**
-     * Check if an account_THINKTHISSHOULDGO exists the corresponds with the given email and password
+     * Check if an account exists the corresponds with the given email and password
      *
      * @param email The email input
      * @param password The password input
      *
-     * @return If an account_THINKTHISSHOULDGO exists then return true else return false
+     * @return If an account exists then return true else return false
      */
     private boolean exists(String email, String password) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
-        String sqlStatement;
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        EMAIL_COLUMN_NAME + " = ?" +
+                " AND " +
+                        PASSWORD_COLUMN_NAME + " = ?;";
         ResultSet resultSet;
         boolean accountExists = false;
 
-        //Get the username corresponding to account with the given email and password
         if (connection != null) {
+            try(PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement)) {
 
-            //TODO:: Turn into PreparedStatement
-            try(Statement statement = connection.createStatement()) {
+                preparedStatement.setString(1, email);
+                preparedStatement.setString(2, password);
 
-                sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                        " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
-                        "\" AND " + PASSWORD_COLUMN_NAME + " = \"" +
-                        password + "\";";
-
-                resultSet = statement.executeQuery(sqlStatement);
+                resultSet = preparedStatement.executeQuery();
 
                 //Check if the result set contains any data,
                 //if so then an account with the corresponding inputs exists
@@ -326,7 +436,7 @@ public class  UserDAOImpl implements IUserDAO {
 
                 //Clean Up
                 resultSet.close();
-                statement.close();
+                preparedStatement.close();
                 connection.close();
 
             } catch (Exception e) {
@@ -346,10 +456,30 @@ public class  UserDAOImpl implements IUserDAO {
     private boolean isEmailTaken(String email) {
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
-        String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                " WHERE " + EMAIL_COLUMN_NAME + " = ?;";
+
+        return isColumnRowTaken(connection, EMAIL_COLUMN_NAME, email);
+    }
+
+    private boolean isUsernameTaken(String username) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+
+        return isColumnRowTaken(connection, USERNAME_COLUMN_NAME, username);
+    }
+
+    private boolean isColumnRowTaken(
+            Connection connection,
+            String column,
+            String value
+    ) {
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE "
+                        + column + " = ?;";
         ResultSet resultSet;
-        boolean emailTaken = false;
+        boolean isTaken = false;
 
         //Get the username corresponding to account with the given email and password
         if (connection != null) {
@@ -358,14 +488,14 @@ public class  UserDAOImpl implements IUserDAO {
                             connection.prepareStatement(sqlStatement)
             ) {
 
-                preparedStatement.setString(1, email);
+                preparedStatement.setString(1, value);
 
                 resultSet = preparedStatement.executeQuery();
 
                 //Check if the result set contains any data,
                 //if so then an account with the corresponding inputs exists
                 if (resultSet.next()) {
-                    emailTaken = true;
+                    isTaken = true;
                 }
 
                 //Clean Up
@@ -384,58 +514,23 @@ public class  UserDAOImpl implements IUserDAO {
             }
         }
 
-        return emailTaken;
+        return isTaken;
     }
 
-    private boolean isUsernameTaken(String username) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
-        String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                " WHERE " + USERNAME_COLUMN_NAME + " = ?;";
-        ResultSet resultSet;
-        boolean usernameTaken = false;
-
-        //Get the username corresponding to account with the given email and password
-        if (connection != null) {
-            try(
-                    PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-            ) {
-
-                preparedStatement.setString(1, username);
-
-                resultSet = preparedStatement.executeQuery();
-
-                //Check if the result set contains any data,
-                //if so then an account with the corresponding inputs exists
-                if (resultSet.next()) {
-                    usernameTaken = true;
-                }
-
-                //Clean Up
-                resultSet.close();
-                preparedStatement.close();
-                connection.close();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    connection.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return usernameTaken;
-    }
-
-    private User getUser(Connection connection, String email, String password) throws SQLException {
+    private User getUser(
+            Connection connection,
+            String email,
+            String password
+    ) throws SQLException {
         User user;
-        String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                " WHERE " + EMAIL_COLUMN_NAME + " = ? AND " +
-                PASSWORD_COLUMN_NAME + " = ?;";
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        EMAIL_COLUMN_NAME + " = ? " +
+                " AND " +
+                        PASSWORD_COLUMN_NAME + " = ?;";
 
         try(
                 PreparedStatement preparedStatement =
@@ -460,19 +555,26 @@ public class  UserDAOImpl implements IUserDAO {
 
     private User getUser(Connection connection, int id) throws SQLException {
         User user;
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
 
-        try(Statement statement = connection.createStatement()) {
-            String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                    " WHERE " + ID_COLUMN_NAME + " = \"" + id +
-                    "\";";
+        try(
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
 
-            ResultSet resultSet = statement.executeQuery(sqlStatement);
+            preparedStatement.setInt(1, id);
 
+            ResultSet resultSet = preparedStatement.executeQuery();
             user = generateUser(resultSet);
 
             //Clean Up
             resultSet.close();
-            statement.close();
+            preparedStatement.close();
             connection.close();
         }
 
@@ -481,20 +583,26 @@ public class  UserDAOImpl implements IUserDAO {
 
     private User getUser(Connection connection, String email) throws SQLException {
         User user;
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        EMAIL_COLUMN_NAME + " = ?;";
 
-        try(Statement statement = connection.createStatement()) {
-            //TODO:: Convert to PreparedStatement
-            String sqlStatement = "SELECT * FROM " + ACCOUNT_TABLE_NAME +
-                    " WHERE " + EMAIL_COLUMN_NAME + " = \"" + email +
-                    "\";";
+        try(
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
 
-            ResultSet resultSet = statement.executeQuery(sqlStatement);
+            preparedStatement.setString(1, email);
 
+            ResultSet resultSet = preparedStatement.executeQuery();
             user = generateUser(resultSet);
 
             //Clean Up
             resultSet.close();
-            statement.close();
+            preparedStatement.close();
             connection.close();
         }
 
@@ -800,5 +908,34 @@ public class  UserDAOImpl implements IUserDAO {
         }
 
         return UserStatus.NULL;
+    }
+
+    private String buildSelectByIdSqlRequest(String... columnNames) {
+        StringBuilder sqlStatementBuilder = null;
+        String sqlStatement = null;
+
+        sqlStatementBuilder = new StringBuilder(
+                "SELECT "
+        );
+
+        for (int i = 0; i < columnNames.length; i++) {
+            sqlStatementBuilder.append(columnNames[i]);
+            if (i < columnNames.length - 1) {
+                sqlStatementBuilder.append(", ");
+            } else {
+                sqlStatementBuilder.append(" ");
+            }
+        }
+
+        sqlStatementBuilder.append(
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;"
+        );
+
+        sqlStatement = sqlStatementBuilder.toString();
+
+        return sqlStatement;
     }
 }

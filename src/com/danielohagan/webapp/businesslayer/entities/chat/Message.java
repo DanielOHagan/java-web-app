@@ -65,7 +65,7 @@ public class Message implements IEntity {
         mCreationTime = creationTime;
     }
 
-    public LocalDateTime getCreationtime() {
+    public LocalDateTime getCreationTime() {
         return mCreationTime;
     }
 }

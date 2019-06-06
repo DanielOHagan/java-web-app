@@ -9,7 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet(name = "ChatFrontController", urlPatterns = "/chat/")
+@WebServlet(
+        name = "ChatFrontController",
+        urlPatterns = "/chat/"
+)
 public class ChatFrontController extends HttpServlet {
 
     @Override

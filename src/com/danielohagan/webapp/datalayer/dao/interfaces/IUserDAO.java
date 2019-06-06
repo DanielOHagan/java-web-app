@@ -3,6 +3,8 @@ package com.danielohagan.webapp.datalayer.dao.interfaces;
 import com.danielohagan.webapp.businesslayer.entities.account.User;
 import com.danielohagan.webapp.datalayer.dao.databaseenums.UserStatus;
 
+import java.util.Map;
+
 public interface IUserDAO extends IEntityDAO<User> {
 
     User getByEmailAndPassword(String email, String password);
@@ -14,7 +16,8 @@ public interface IUserDAO extends IEntityDAO<User> {
     void createNewUser(User user, String password);
     void deleteUser(int id);
 
-    boolean exists(int id);
-
     boolean isCorrectPassword(int id, String password);
+
+    Map<String, String> getColumnStringsById(int id,  String... columnNames);
+    Map<String, Integer> getColumnIntegersById(int id, String... columnNames);
 }

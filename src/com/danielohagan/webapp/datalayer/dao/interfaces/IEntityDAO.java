@@ -6,5 +6,6 @@ import com.danielohagan.webapp.businesslayer.entities.IEntity;
 public interface IEntityDAO<T extends IEntity> {
 
     T getById(int id);
+    boolean exists(int id);
 
 }
