@@ -1,17 +1,18 @@
 package com.danielohagan.webapp.businesslayer.chat.websocket;
 
+import com.danielohagan.webapp.businesslayer.chat.websocket.attrributes.ServerActionEnum;
+import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
 import com.danielohagan.webapp.datalayer.dao.implementations.ChatSessionDAOImpl;
+import com.danielohagan.webapp.utils.Random;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-@ServerEndpoint(
-        value = "/chat"
-
-)
+@ServerEndpoint(value = "/chat")
 public class UserChatEndpoint {
 
     private static final Map<Integer, ChatSessionHandler> mChatSessionMap = new HashMap<>();
@@ -28,7 +29,7 @@ public class UserChatEndpoint {
     public String onMessage(String message, Session session) {
         System.out.println("Socket Received Message: " + message);
 
-        ChatActionEnum action = WebSocketMessageUtils.decodeMessageAction(message);
+        ServerActionEnum action = WebSocketMessageUtils.decodeMessageAction(message);
         Integer chatSessionId = WebSocketMessageUtils.getChatSessionId(message);
 
         switch (action) {
@@ -43,31 +44,25 @@ public class UserChatEndpoint {
                 mChatSessionMap.get(chatSessionId).addNewMessage(message);
                 break;
             case DELETE_MESSAGE:
-//                mChatSessionMap.get(chatSessionId)
-//                        .deleteMessage(WebSocketMessageUtils.getMessageId(message));
+                mChatSessionMap.get(chatSessionId).deleteMessage(message);
                 break;
             case EDIT_MESSAGE:
-//                mChatSessionMap.get(chatSessionId).editMessage(message);
+                mChatSessionMap.get(chatSessionId).editMessage(message, session);
                 break;
             case ADD_USER:
-//                mChatSessionMap.get(chatSessionId).addUser(message)
+                mChatSessionMap.get(chatSessionId).addUser(message);
                 break;
             case REMOVE_USER:
-
+                mChatSessionMap.get(chatSessionId).removeUser(message);
                 break;
-//            case CREATE_NEW_CHAT_SESSION:
-//                TODO::
-//                  Chat Sessions are displayed through a HTTP Request,
-//                  I think that needs to change to WebSocket,
-//                  Or if I'm too lazy, then sent an action message to
-//                  JS client to refresh the page
-//                break;
+            case CHANGE_USER_PERMISSION:
+                mChatSessionMap.get(chatSessionId).updateUserPermission(message);
+                break;
+            case CREATE_NEW_CHAT_SESSION:
+                Integer creatorId = WebSocketMessageUtils.getUserId(message);
+                createNewChatSession(creatorId, session);
+                break;
             case DELETE_CHAT_SESSION:
-//                TODO::
-//                  Chat Sessions are displayed through a HTTP Request,
-//                  I think that needs to change to WebSocket,
-//                  Or if I'm too lazy, then sent an action message to
-//                  JS client to refresh the page
                 mChatSessionMap.get(chatSessionId).deleteChatSession(message, session);
                 mChatSessionMap.remove(chatSessionId);
                 break;
@@ -77,20 +72,18 @@ public class UserChatEndpoint {
             case ERROR:
 //                System.out.println("ERROR: " + getErrorMessage(message));
                 break;
-            case DISPLAY_MESSAGE_LIST:
-                //Display a list of messages
-                break;
-            case DISPLAY_MESSAGE:
-                //Display a single message
-                break;
-            case DISPLAY_USER:
-                //Display a user
+            case CLOSE_PREVIOUS_CHAT_SESSION:
+                mChatSessionMap.get(chatSessionId).removeSession(session);
                 break;
             case NO_ACTION:
-                System.out.println("Message received but was given no action, or no action could be read.");
+                System.err.println("Message received but was given no action, or no action could be read.");
                 break;
             case ACTION:
                 //Since no action was specified, maybe log the message?
+                break;
+
+            default:
+                System.err.println("Unrecognised action string: " + action.getAttributeString());
                 break;
         }
 
@@ -116,7 +109,7 @@ public class UserChatEndpoint {
         }
     }
 
-    public void initChatSession(String message, Session session) {
+    private void initChatSession(String message, Session session) {
         Integer chatSessionId = WebSocketMessageUtils.getChatSessionId(message);
         Integer userId = WebSocketMessageUtils.getUserId(message);
 
@@ -135,13 +128,34 @@ public class UserChatEndpoint {
         }
     }
 
-    public void closeSession(String message, Session session) {
+    private void closeSession(String message, Session session) {
         Integer chatSessionId = WebSocketMessageUtils.getChatSessionId(message);
 
         if (chatSessionId != null) {
             if (mChatSessionMap.get(chatSessionId) != null) {
                 mChatSessionMap.get(chatSessionId).removeSession(session);
             }
+        }
+    }
+
+    private void createNewChatSession(Integer creatorId, Session session) {
+        if (creatorId != null) {
+            int chatSessionId = Random.generateRandomPositiveInt();
+
+            while (mChatSessionDAO.exists(chatSessionId)) {
+                chatSessionId = Random.generateRandomPositiveInt();
+            }
+
+            ChatSession chatSession = new ChatSession(
+                    chatSessionId,
+                    "Chat Session: " + chatSessionId,
+                    LocalDateTime.now()
+            );
+            ChatSessionHandler chatSessionHandler = new ChatSessionHandler(chatSession);
+            chatSessionHandler.addSession(session);
+            chatSessionHandler.createChatSession(creatorId, session);
+
+            mChatSessionMap.put(chatSessionId, new ChatSessionHandler(chatSession));
         }
     }
 }

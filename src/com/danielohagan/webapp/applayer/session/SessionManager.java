@@ -2,7 +2,6 @@ package com.danielohagan.webapp.applayer.session;
 
 import com.danielohagan.webapp.businesslayer.entities.account.User;
 import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
-import com.danielohagan.webapp.businesslayer.entities.chat.Message;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
@@ -64,35 +63,5 @@ public class SessionManager {
                 ATTRIBUTE_CHAT_SESSION_LIST,
                 chatSessionList
         );
-    }
-
-    public static void setPrimaryChatSessionMessageList(
-            HttpSession httpSession,
-            List<Message> sessionMessages
-    ) {
-        httpSession.setAttribute(
-                ATTRIBUTE_CHAT_SESSION_MESSAGE_LIST,
-                sessionMessages
-        );
-    }
-
-    public static void setPrimaryChatSession(
-            HttpSession httpSession,
-            ChatSession primaryChatSession
-    ) {
-        httpSession.setAttribute(
-                ATTRIBUTE_PRIMARY_CHAT_SESSION,
-                primaryChatSession
-        );
-        setPrimaryChatSessionMessageList(
-                httpSession,
-                primaryChatSession.getMessageList()
-        );
-    }
-
-    public static void setPrimaryChatSessionToDefault(
-            HttpSession httpSession
-    ) {
-        httpSession.removeAttribute(ATTRIBUTE_PRIMARY_CHAT_SESSION);
     }
 }

@@ -22,6 +22,8 @@ public interface IMessageDAO extends IEntityDAO<Message> {
     List<Message> getChatSessionMessageListBeforeTime(int sessionId, LocalDateTime time);
     List<Message> getChatSessionMessageListBeforeTime(int sessionId, LocalDateTime time, int messageCount);
 
+    String getColumnString(int id, String columnName);
+    Integer getColumnInteger(int id, String columnName);
     Map<String, String> getColumnStringsById(int id, String... columnNames);
     Map<String, Integer> getColumnIntegersById(int id, String... columnNames);
 

@@ -235,6 +235,8 @@ public class UserDAOImpl implements IUserDAO {
             int id,
             String... columnNames
     ) {
+        //TODO:: Check to see if this is working now
+
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
         Map<String, String> columnStringsMap = new HashMap<>();
@@ -248,7 +250,7 @@ public class UserDAOImpl implements IUserDAO {
 
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            if (columnNames.length > 0) {
+            if (columnNames.length > 0 && resultSet.next()) {
                 for (String columnName : columnNames) {
                     columnStringsMap.put(
                             columnName,
@@ -267,11 +269,14 @@ public class UserDAOImpl implements IUserDAO {
         return columnStringsMap;
     }
 
+
     @Override
     public Map<String, Integer> getColumnIntegersById(
             int id,
             String... columnNames
     ) {
+        //TODO:: Check to see if this is working now
+
         Connection connection =
                 DatabaseConnection.getDatabaseConnection();
         Map<String, Integer> columnIntegerMap = new HashMap<>();
@@ -279,7 +284,7 @@ public class UserDAOImpl implements IUserDAO {
 
         try (
                 PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement.toString())
+                        connection.prepareStatement(sqlStatement)
         ) {
             preparedStatement.setInt(1, id);
 
@@ -302,6 +307,22 @@ public class UserDAOImpl implements IUserDAO {
         }
 
         return columnIntegerMap;
+    }
+
+    @Override
+    public String getColumnString(int id, String columnName) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+
+        return getColumnString(connection, id, columnName);
+    }
+
+    @Override
+    public Integer getColumnInteger(int id, String columnName) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+
+        return getColumnInteger(connection, id, columnName);
     }
 
     @Override
@@ -396,6 +417,35 @@ public class UserDAOImpl implements IUserDAO {
         }
 
         return user;
+    }
+
+    @Override
+    public List<User> getByUsername(String username) {
+        List<User> userList = new ArrayList<>();
+
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+        String sqlStatement =
+                "SELECT *" +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        USERNAME_COLUMN_NAME + " = ?;";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setString(1, username);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            userList = generateUserList(resultSet);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return userList;
     }
 
     /**
@@ -629,6 +679,28 @@ public class UserDAOImpl implements IUserDAO {
         }
 
         return user;
+    }
+
+    private List<User> generateUserList(ResultSet resultSet) {
+        List<User> userList = new ArrayList<>();
+
+        try {
+            while (resultSet.next()) {
+                userList.add(new User(
+                        resultSet.getInt(ID_COLUMN_NAME),
+                        resultSet.getString(EMAIL_COLUMN_NAME),
+                        resultSet.getString(USERNAME_COLUMN_NAME),
+                        parseUserStatusFromString(
+                                resultSet.getString(STATUS_COLUMN_NAME)
+                        ),
+                        resultSet.getObject(CREATION_TIME_COLUMN_NAME, LocalDateTime.class)
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return userList;
     }
 
     /**
@@ -937,5 +1009,64 @@ public class UserDAOImpl implements IUserDAO {
         sqlStatement = sqlStatementBuilder.toString();
 
         return sqlStatement;
+    }
+
+    private String getColumnString(Connection connection, int id, String columnName) {
+        String result = null;
+
+        String sqlStatement =
+                "SELECT " +
+                        columnName +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                result = resultSet.getString(columnName);
+            }
+
+            resultSet.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    private Integer getColumnInteger(Connection connection, int id, String columnName) {
+        Integer result = null;
+
+        String sqlStatement =
+                "SELECT " +
+                        columnName +
+                " FROM " +
+                        ACCOUNT_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            result = resultSet.getInt(columnName);
+
+            resultSet.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 }

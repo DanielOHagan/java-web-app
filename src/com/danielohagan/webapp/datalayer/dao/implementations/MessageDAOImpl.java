@@ -46,11 +46,18 @@ public class MessageDAOImpl implements IMessageDAO {
             ResultSet resultSet = preparedStatement.executeQuery();
             message = generateMessage(resultSet);
 
-            resultSet.close();
             preparedStatement.close();
-            connection.close();
+            resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return message;
@@ -80,9 +87,16 @@ public class MessageDAOImpl implements IMessageDAO {
 
             preparedStatement.close();
             resultSet.close();
-            connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return exists;
@@ -114,8 +128,18 @@ public class MessageDAOImpl implements IMessageDAO {
             preparedStatement.setObject(5, message.getCreationTime());
 
             preparedStatement.execute();
+
+            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -138,9 +162,16 @@ public class MessageDAOImpl implements IMessageDAO {
             preparedStatement.execute();
 
             preparedStatement.close();
-            connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -182,8 +213,18 @@ public class MessageDAOImpl implements IMessageDAO {
             preparedStatement.setInt(2, userId);
 
             preparedStatement.execute();
+
+            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -248,11 +289,17 @@ public class MessageDAOImpl implements IMessageDAO {
             messageList = generateMessageList(resultSet);
 
             preparedStatement.close();
-            connection.close();
             resultSet.close();
-
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return messageList;
@@ -296,11 +343,18 @@ public class MessageDAOImpl implements IMessageDAO {
             ResultSet resultSet = preparedStatement.executeQuery();
             messageList = generateMessageList(resultSet);
 
-            resultSet.close();
             preparedStatement.close();
-            connection.close();
+            resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return messageList;
@@ -333,7 +387,7 @@ public class MessageDAOImpl implements IMessageDAO {
                 " AND " +
                         CREATION_TIME_COLUMN_NAME + " < ?" +
                 " ORDER BY " +
-                        "-" + CREATION_TIME_COLUMN_NAME +
+                        CREATION_TIME_COLUMN_NAME +
                 " LIMIT " +
                         " ? " + ";";
 
@@ -348,11 +402,18 @@ public class MessageDAOImpl implements IMessageDAO {
             ResultSet resultSet = preparedStatement.executeQuery();
             messageList = generateMessageList(resultSet);
 
-            resultSet.close();
             preparedStatement.close();
-            connection.close();
+            resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return messageList;
@@ -385,11 +446,18 @@ public class MessageDAOImpl implements IMessageDAO {
                 }
             }
 
-            resultSet.close();
             preparedStatement.close();
-            connection.close();
+            resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return columnStringsMap;
@@ -422,14 +490,114 @@ public class MessageDAOImpl implements IMessageDAO {
                 }
             }
 
-            resultSet.close();
             preparedStatement.close();
-            connection.close();
+            resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return columnIntegerMap;
+    }
+
+    @Override
+    public String getColumnString(int id, String columnName) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+
+        return getColumnString(connection, id, columnName);
+    }
+
+    @Override
+    public Integer getColumnInteger(int id, String columnName) {
+        Connection connection =
+                DatabaseConnection.getDatabaseConnection();
+
+        return getColumnInteger(connection, id, columnName);
+    }
+
+    private String getColumnString(Connection connection, int id, String columnName) {
+        String result = null;
+
+        String sqlStatement =
+                "SELECT " +
+                        columnName +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                result = resultSet.getString(columnName);
+            }
+
+            preparedStatement.close();
+            resultSet.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Integer getColumnInteger(Connection connection, int id, String columnName) {
+        Integer result = null;
+
+        String sqlStatement =
+                "SELECT " +
+                        columnName +
+                " FROM " +
+                        MESSAGE_TABLE_NAME +
+                " WHERE " +
+                        ID_COLUMN_NAME + " = ?;";
+
+        try (
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            result = resultSet.getInt(columnName);
+
+            preparedStatement.close();
+            resultSet.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -463,10 +631,15 @@ public class MessageDAOImpl implements IMessageDAO {
                 //Clean Up
                 preparedStatement.close();
                 resultSet.close();
-                connection.close();
 
             } catch (SQLException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -530,8 +703,18 @@ public class MessageDAOImpl implements IMessageDAO {
             preparedStatement.setInt(1, id);
 
             preparedStatement.execute();
+
+            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

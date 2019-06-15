@@ -1,5 +1,8 @@
 package com.danielohagan.webapp.businesslayer.chat.websocket;
 
+import com.danielohagan.webapp.businesslayer.chat.websocket.attrributes.AttributeEnum;
+import com.danielohagan.webapp.businesslayer.chat.websocket.attrributes.ServerActionEnum;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -13,10 +16,22 @@ public class WebSocketMessageUtils {
         try (JsonReader reader = Json.createReader(new StringReader(message))) {
             JsonObject jsonObject = reader.readObject();
 
-            userId = jsonObject.getInt("userId");
+            userId = jsonObject.getInt(AttributeEnum.USER_ID.getAttributeString());
         }
 
         return userId;
+    }
+
+    public static Integer getNewUserId(String message) {
+        Integer newUserId;
+
+        try (JsonReader reader = Json.createReader(new StringReader(message))) {
+            JsonObject jsonObject = reader.readObject();
+
+            newUserId = jsonObject.getInt(AttributeEnum.NEW_USER_ID.getAttributeString());
+        }
+
+        return newUserId;
     }
 
     public static Integer getChatSessionId(String message) {
@@ -25,31 +40,43 @@ public class WebSocketMessageUtils {
         try (JsonReader reader = Json.createReader(new StringReader(message))) {
             JsonObject jsonObject = reader.readObject();
 
-            chatSessionId = jsonObject.getInt("chatSessionId");
+            chatSessionId = jsonObject.getInt(AttributeEnum.CHAT_SESSION_ID.getAttributeString());
         }
 
         return chatSessionId;
     }
 
-    public static ChatActionEnum decodeMessageAction(String message) {
+    public static ServerActionEnum decodeMessageAction(String message) {
         try (JsonReader reader = Json.createReader(new StringReader(message))) {
             JsonObject jsonObject = reader.readObject();
 
-            String actionString = jsonObject.getString(ChatActionEnum.ACTION.getActionString());
+            String actionString = jsonObject.getString(ServerActionEnum.ACTION.getAttributeString());
 
             return parseChatActionEnumFromString(actionString);
         }
     }
 
-    public static ChatActionEnum parseChatActionEnumFromString(String stringValue) {
+    public static ServerActionEnum parseChatActionEnumFromString(String stringValue) {
         if (stringValue != null && !stringValue.isEmpty()) {
-            for (ChatActionEnum chatActionEnum : ChatActionEnum.values()) {
-                if (chatActionEnum.getActionString().equals(stringValue)) {
-                    return chatActionEnum;
+            for (ServerActionEnum serverActionEnum : ServerActionEnum.values()) {
+                if (serverActionEnum.getAttributeString().equals(stringValue)) {
+                    return serverActionEnum;
                 }
             }
         }
 
-        return ChatActionEnum.NO_ACTION;
+        return ServerActionEnum.NO_ACTION;
+    }
+
+    public static Integer getMessageId(String message) {
+        Integer messageId;
+
+        try (JsonReader reader = Json.createReader(new StringReader(message))) {
+            JsonObject jsonObject = reader.readObject();
+
+            messageId = jsonObject.getInt(AttributeEnum.ID.getAttributeString());
+        }
+
+        return messageId;
     }
 }

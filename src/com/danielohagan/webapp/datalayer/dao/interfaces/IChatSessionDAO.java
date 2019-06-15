@@ -14,7 +14,7 @@ public interface IChatSessionDAO extends IEntityDAO<ChatSession> {
 
     void updateSessionName(int sessionId, String name);
 
-    void addUserToSession(int sessionId, int userId);
+    void addUserToSession(int sessionId, int userId, ChatPermissionLevel permissionLevel);
     void removeUserFromSession(int sessionId, int userId);
 
     void removeLinksByUser(int userId);
@@ -25,6 +25,7 @@ public interface IChatSessionDAO extends IEntityDAO<ChatSession> {
 
     boolean userIsInChatSession(int userId, int sessionId);
 
+    ChatSessionUser getChatSessionUser(int userId, int sessionId);
     List<ChatSessionUser> getUserListBySession(int sessionId);
     List<ChatSessionUser> getUserListByPermission(int sessionId, ChatPermissionLevel chatPermissionLevel);
     List<ChatSession> getChatSessionList(int userId);

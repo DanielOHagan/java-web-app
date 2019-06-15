@@ -19,25 +19,21 @@ public class ChatSession implements IEntity {
             int id,
             String name,
             List<ChatSessionUser> userList,
-//            List<Message> messageList,
             LocalDateTime creationTime
     ) {
         mId = id;
         mName = name;
         mUserList = userList;
-//        mMessageList = messageList;
         mCreationTime = creationTime;
     }
 
     public ChatSession(
             int id,
             String name,
-//            List<Message> messageList,
             LocalDateTime creationTime
     ) {
         mId = id;
         mName = name;
-//        mMessageList = messageList;
         mCreationTime = creationTime;
     }
 
@@ -66,5 +62,19 @@ public class ChatSession implements IEntity {
         mUserList = userList;
     }
 
-    //TODO:: Getters and setters
+    public LocalDateTime getCreationTime() {
+        return mCreationTime;
+    }
+
+    public Message getMessageById(int messageId) {
+        if (mMessageList != null) {
+            for (Message message : mMessageList) {
+                if (message.getId() == messageId) {
+                    return message;
+                }
+            }
+        }
+
+        return null;
+    }
 }
