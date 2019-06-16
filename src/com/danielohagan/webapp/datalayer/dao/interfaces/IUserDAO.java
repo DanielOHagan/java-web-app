@@ -19,6 +19,7 @@ public interface IUserDAO extends IEntityDAO<User> {
     void deleteUser(int id);
 
     boolean isCorrectPassword(int id, String password);
+    boolean exists(String email, String password);
 
     Map<String, String> getColumnStringsById(int id,  String... columnNames);
     Map<String, Integer> getColumnIntegersById(int id, String... columnNames);

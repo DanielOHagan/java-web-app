@@ -5,7 +5,7 @@ import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
 import com.danielohagan.webapp.businesslayer.entities.chat.ChatSessionUser;
 import com.danielohagan.webapp.datalayer.dao.databaseenums.ChatPermissionLevel;
 import com.danielohagan.webapp.datalayer.dao.interfaces.IChatSessionDAO;
-import com.danielohagan.webapp.datalayer.database.DatabaseConnection;
+import com.danielohagan.webapp.datalayer.database.hikari.DataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,51 +33,52 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
     @Override
     public void createNewSession(ChatSession chatSession, int creatorId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
+        try (Connection connection = DataSource.getConnection()) {
+            //Insert into Chat Session table
+            createNewSession(connection, chatSession);
 
-        //Insert into Chat Session table
-        createNewSession(connection, chatSession);
-
-        //Create Chat Session Account Link
-        addUserToSession(
-                connection,
-                chatSession.getId(),
-                creatorId,
-                ChatPermissionLevel.CREATOR
-        );
+            //Create Chat Session Account Link
+            addUserToSession(
+                    connection,
+                    chatSession.getId(),
+                    creatorId,
+                    ChatPermissionLevel.CREATOR
+            );
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void deleteSession(int sessionId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         MessageDAOImpl messageDAO = new MessageDAOImpl();
 
-        //Remove Chat Session
-        deleteRowsByCondition(
-                connection,
-                CHAT_SESSION_TABLE_NAME,
-                CHAT_SESSION_ID_COLUMN_NAME,
-                sessionId
-        );
+        try (Connection connection = DataSource.getConnection()) {
+            //Remove Chat Session
+            deleteRowsByCondition(
+                    connection,
+                    CHAT_SESSION_TABLE_NAME,
+                    CHAT_SESSION_ID_COLUMN_NAME,
+                    sessionId
+            );
 
-        //Remove Messages
-        messageDAO.deleteMessageBySession(sessionId);
+            //Remove Messages
+            messageDAO.deleteMessageBySession(sessionId);
 
-        //Remove Session-Account Links
-        deleteRowsByCondition(
-                connection,
-                LINK_TABLE_NAME,
-                LINK_CHAT_SESSION_ID_COLUMN_NAME,
-                sessionId
-        );
+            //Remove Session-Account Links
+            deleteRowsByCondition(
+                    connection,
+                    LINK_TABLE_NAME,
+                    LINK_CHAT_SESSION_ID_COLUMN_NAME,
+                    sessionId
+            );
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void updateSessionName(int sessionId, String name) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "UPDATE " +
                         CHAT_SESSION_TABLE_NAME +
@@ -86,27 +87,17 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 " WHERE " +
                         CHAT_SESSION_ID_COLUMN_NAME + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setString(1, name);
             preparedStatement.setInt(2, sessionId);
 
             preparedStatement.execute();
-
             preparedStatement.close();
-            connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -115,14 +106,15 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
      *
      * @param sessionId Target Chat Session to add User
      * @param userId    Target User to add to Chat Session
-     * @param permissionLevel
+     * @param permissionLevel The Permission Level granted to the User
      */
     @Override
     public void addUserToSession(int sessionId, int userId, ChatPermissionLevel permissionLevel) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
-
-        addUserToSession(connection, sessionId, userId, permissionLevel);
+        try (Connection connection = DataSource.getConnection()) {
+            addUserToSession(connection, sessionId, userId, permissionLevel);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -133,8 +125,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
      */
     @Override
     public void removeUserFromSession(int sessionId, int userId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "DELETE *" +
                 " FROM " +
@@ -144,53 +134,52 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 " AND " +
                         LINK_ACCOUNT_ID_COLUMN_NAME + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setInt(2, userId);
 
             preparedStatement.execute();
-
             preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
     @Override
     public void removeLinksByUser(int userId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
-
-        deleteRowsByCondition(
-                connection,
-                LINK_TABLE_NAME,
-                LINK_ACCOUNT_ID_COLUMN_NAME,
-                userId
-        );
+        try (Connection connection = DataSource.getConnection()) {
+            deleteRowsByCondition(
+                    connection,
+                    LINK_TABLE_NAME,
+                    LINK_ACCOUNT_ID_COLUMN_NAME,
+                    userId
+            );
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void removeLinksBySession(int sessionId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
+        Connection connection = null;
 
-        deleteRowsByCondition(
-                connection,
-                LINK_TABLE_NAME,
-                LINK_CHAT_SESSION_ID_COLUMN_NAME,
-                sessionId
-        );
+        try {
+            connection = DataSource.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        if (connection != null) {
+            deleteRowsByCondition(
+                    connection,
+                    LINK_TABLE_NAME,
+                    LINK_CHAT_SESSION_ID_COLUMN_NAME,
+                    sessionId
+            );
+        }
     }
 
     @Override
@@ -205,8 +194,14 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
     @Override
     public ChatPermissionLevel getUserPermissionLevel(int sessionId, int userId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
+        Connection connection = null;
+
+        try {
+            connection = DataSource.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         String sqlStatement =
                 "SELECT " +
                         LINK_PERMISSION_LEVEL_COLUMN_NAME +
@@ -219,29 +214,23 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
         ChatPermissionLevel permissionLevel = ChatPermissionLevel.NULL;
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
-            preparedStatement.setInt(1, sessionId);
-            preparedStatement.setInt(2, userId);
+        if (connection != null) {
+            try (
+                    PreparedStatement preparedStatement =
+                            connection.prepareStatement(sqlStatement)
+            ) {
+                preparedStatement.setInt(1, sessionId);
+                preparedStatement.setInt(2, userId);
 
-            ResultSet resultSet = preparedStatement.executeQuery();
+                ResultSet resultSet = preparedStatement.executeQuery();
 
-            if (resultSet.next()) {
-                permissionLevel = parsePermissionLevelFromString(
-                        resultSet.getString(LINK_PERMISSION_LEVEL_COLUMN_NAME)
-                );
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                if (resultSet.next()) {
+                    permissionLevel = parsePermissionLevelFromString(
+                            resultSet.getString(LINK_PERMISSION_LEVEL_COLUMN_NAME)
+                    );
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
 
@@ -250,8 +239,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
     @Override
     public boolean exists(int sessionId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT " +
                         CHAT_SESSION_ID_COLUMN_NAME +
@@ -260,10 +247,10 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 " WHERE "
                         + CHAT_SESSION_ID_COLUMN_NAME + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, sessionId);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -272,35 +259,31 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 preparedStatement.close();
                 resultSet.close();
                 return true;
+            } else if (resultSet != null) {
+                resultSet.close();
             }
 
             preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return false;
     }
 
     @Override
-    public Map<String, Integer> getColumnIntegersById(int id,String tableName, String... columnNames) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
+    public Map<String, Integer> getColumnIntegersById(
+            int id,
+            String tableName,
+            String... columnNames
+    ) {
         Map<String, Integer> columnIntegerMap = new HashMap<>();
         String sqlStatement = buildSelectByIdSqlRequest(tableName, columnNames);
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement.toString())
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -318,14 +301,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return columnIntegerMap;
@@ -333,15 +308,13 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
     @Override
     public Map<String, String> getColumnStringsById(int id, String tableName, String... columnNames) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         Map<String, String> columnStringsMap = new HashMap<>();
         String sqlStatement = buildSelectByIdSqlRequest(tableName, columnNames);
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -359,14 +332,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return columnStringsMap;
@@ -374,8 +339,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
     @Override
     public boolean userIsInChatSession(int userId, int sessionId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT " +
                         LINK_ID_COLUMN_NAME +
@@ -386,10 +349,11 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 " AND " +
                         LINK_CHAT_SESSION_ID_COLUMN_NAME + " = ?;";
         boolean inSession = false;
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, userId);
             preparedStatement.setInt(2, sessionId);
 
@@ -400,18 +364,10 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 inSession = true;
             }
 
-            preparedStatement.close();
+                preparedStatement.close();
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return inSession;
@@ -428,8 +384,7 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
     @Override
     public List<ChatSessionUser> getUserListBySession(int sessionId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
+        List<ChatSessionUser> chatSessionUserList = null;
         String sqlStatement =
                 "SELECT " +
                         UserDAOImpl.ACCOUNT_TABLE_NAME + "." + UserDAOImpl.ID_COLUMN_NAME + ", " +
@@ -450,22 +405,18 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 " WHERE " +
                         LINK_TABLE_NAME + "." + LINK_CHAT_SESSION_ID_COLUMN_NAME + " = ?;";
 
-        List<ChatSessionUser> chatSessionUserList = null;
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
             preparedStatement.setInt(1, sessionId);
 
             ResultSet resultSet = preparedStatement.executeQuery();
 
             chatSessionUserList = generateChatSessionUserList(resultSet);
 
-            connection.close();
             preparedStatement.close();
             resultSet.close();
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -478,9 +429,8 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             int sessionId,
             ChatPermissionLevel chatPermissionLevel
     ) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
 
+        List<ChatSessionUser> chatSessionUserList = null;
         String sqlStatement =
                 "SELECT " +
                         UserDAOImpl.ACCOUNT_TABLE_NAME + "." + UserDAOImpl.ID_COLUMN_NAME + ", " +
@@ -503,12 +453,9 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 " AND " +
                         LINK_PERMISSION_LEVEL_COLUMN_NAME + " = ?;";
 
-        List<ChatSessionUser> chatSessionUserList = null;
-
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
 
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setString(
@@ -522,17 +469,8 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
             preparedStatement.close();
             resultSet.close();
-
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return chatSessionUserList;
@@ -547,8 +485,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
     @Override
     public List<ChatSession> getChatSessionList(int userId) {
         List<ChatSession> chatSessionList = new ArrayList<>();
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         StringBuilder sqlStatement =
                 new StringBuilder(
                         "SELECT *" +
@@ -559,24 +495,24 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                         " IN ( "
                 );
 
-        List<Integer> chatSessionIdList =
-                getChatSessionLinksByUser(connection, userId);
+        try (Connection connection = DataSource.getConnection()) {
+            List<Integer> chatSessionIdList =
+                    getChatSessionLinksByUser(connection, userId);
 
-        //Append the Wildcard parameters to the SQL statement
-        if (chatSessionIdList.size() > 0) {
-            for (int i = 0; i < chatSessionIdList.size(); i++) {
-                //Append to the SQL statement
-                if (i == chatSessionIdList.size() - 1) {
-                    sqlStatement.append(" ?)");
-                } else {
-                    sqlStatement.append(" ?, ");
+            //Append the Wildcard parameters to the SQL statement
+            if (chatSessionIdList.size() > 0) {
+                for (int i = 0; i < chatSessionIdList.size(); i++) {
+                    //Append to the SQL statement
+                    if (i == chatSessionIdList.size() - 1) {
+                        sqlStatement.append(" ?)");
+                    } else {
+                        sqlStatement.append(" ?, ");
+                    }
                 }
-            }
 
-            try (
-                    PreparedStatement preparedStatement =
-                            connection.prepareStatement(sqlStatement.toString())
-            ) {
+                PreparedStatement preparedStatement =
+                        connection.prepareStatement(sqlStatement.toString());
+
                 if (chatSessionIdList.size() > 0) {
                     for (int i = 0; i < chatSessionIdList.size(); i++) {
                         //Store the Session ID as an SQL wildcard
@@ -590,18 +526,9 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
 
                     chatSessionList = generateChatSessionList(resultSet);
                 }
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return chatSessionList;
@@ -610,8 +537,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
     @Override
     public ChatSession getById(int id) {
         ChatSession chatSession = null;
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT " + "*" +
                 " FROM " +
@@ -619,10 +544,9 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 " WHERE " +
                         CHAT_SESSION_ID_COLUMN_NAME + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
 
             preparedStatement.setInt(1, id);
 
@@ -632,21 +556,12 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 if (resultSet.next()) {
                     chatSession = generateChatSession(resultSet);
                 }
+
                 resultSet.close();
             }
 
-            preparedStatement.close();
-
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return chatSession;
@@ -671,18 +586,8 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             preparedStatement.setObject(3, chatSession.getCreationTime());
 
             preparedStatement.execute();
-
-            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -805,8 +710,9 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                 while (resultSet.next()) {
                     chatSessionIdList.add(resultSet.getInt("chat_session_id"));
                 }
-            }
 
+                resultSet.close();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -847,20 +753,14 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
         ) {
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setInt(2, userId);
+            preparedStatement.setString(
+                    3,
+                    permissionLevel.getDatabaseEnumStringValue()
+            );
 
             preparedStatement.execute();
-
-            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -884,18 +784,8 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             preparedStatement.setInt(1, conditionValue);
 
             preparedStatement.execute();
-
-            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 

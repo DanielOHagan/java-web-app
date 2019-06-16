@@ -2,7 +2,7 @@ package com.danielohagan.webapp.datalayer.dao.implementations;
 
 import com.danielohagan.webapp.businesslayer.entities.chat.Message;
 import com.danielohagan.webapp.datalayer.dao.interfaces.IMessageDAO;
-import com.danielohagan.webapp.datalayer.database.DatabaseConnection;
+import com.danielohagan.webapp.datalayer.database.hikari.DataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,8 +27,6 @@ public class MessageDAOImpl implements IMessageDAO {
 
     @Override
     public Message getById(int id) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT *" +
                 " FROM " +
@@ -37,10 +35,10 @@ public class MessageDAOImpl implements IMessageDAO {
                         ID_COLUMN_NAME + " = ?;";
         Message message = null;
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -50,14 +48,6 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return message;
@@ -65,8 +55,6 @@ public class MessageDAOImpl implements IMessageDAO {
 
     @Override
     public boolean exists(int id) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT " +
                         ID_COLUMN_NAME +
@@ -76,10 +64,10 @@ public class MessageDAOImpl implements IMessageDAO {
                         ID_COLUMN_NAME + " = ?;";
         boolean exists = false;
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -89,14 +77,6 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return exists;
@@ -104,8 +84,6 @@ public class MessageDAOImpl implements IMessageDAO {
 
     @Override
     public void createNewMessage(Message message) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "INSERT INTO " +
                     MESSAGE_TABLE_NAME + " (" +
@@ -117,10 +95,10 @@ public class MessageDAOImpl implements IMessageDAO {
                     ")" +
                 " VALUES (?, ?, ?, ?, ?);";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, message.getId());
             preparedStatement.setInt(2, message.getSenderId());
             preparedStatement.setInt(3, message.getChatSessionId());
@@ -128,25 +106,15 @@ public class MessageDAOImpl implements IMessageDAO {
             preparedStatement.setObject(5, message.getCreationTime());
 
             preparedStatement.execute();
-
             preparedStatement.close();
+
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
     @Override
     public void updateMessageBody(int messageId, String body) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "UPDATE " +
                         MESSAGE_TABLE_NAME +
@@ -155,23 +123,17 @@ public class MessageDAOImpl implements IMessageDAO {
                 " WHERE " +
                         ID_COLUMN_NAME + " = ?;";
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement)) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setString(1, body);
             preparedStatement.setInt(2, messageId);
 
             preparedStatement.execute();
-
             preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -193,8 +155,6 @@ public class MessageDAOImpl implements IMessageDAO {
      */
     @Override
     public void deleteSessionMessageByUser(int sessionId, int userId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "DELETE *" +
                 " FROM " +
@@ -204,27 +164,17 @@ public class MessageDAOImpl implements IMessageDAO {
                 " AND " +
                         SENDER_ID_COLUMN_NAME + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
 
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setInt(2, userId);
 
             preparedStatement.execute();
-
             preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -243,12 +193,40 @@ public class MessageDAOImpl implements IMessageDAO {
         deleteColumnRowsById(SENDER_ID_COLUMN_NAME, userId);
     }
 
+    /**
+     * Get all of the messages that have been sent to a chat session
+     *
+     * @param sessionId Chat Session ID
+     *
+     * @return List of all messages from a Chat Session
+     */
     @Override
     public List<Message> getChatSessionMessageList(int sessionId) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
+        List<Message> messageList = new ArrayList<>();
+        String sqlStatement =
+                "SELECT *" +
+                        " FROM " +
+                        MESSAGE_TABLE_NAME +
+                        " WHERE " +
+                        CHAT_SESSION_ID_COLUMN_NAME + "= ?";
 
-        return getMessageList(connection, sessionId);
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
+            preparedStatement.setInt(1, sessionId);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            messageList = generateMessageList(resultSet);
+
+            preparedStatement.close();
+            resultSet.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return messageList;
     }
 
     /**
@@ -266,8 +244,6 @@ public class MessageDAOImpl implements IMessageDAO {
             int userId
     ) {
         List<Message> messageList = new ArrayList<>();
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT *" +
                 " FROM " +
@@ -277,10 +253,9 @@ public class MessageDAOImpl implements IMessageDAO {
                 " AND " +
                         SENDER_ID_COLUMN_NAME + " = ?;";
 
-        try(
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
 
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setInt(2, userId);
@@ -292,14 +267,6 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return messageList;
@@ -320,8 +287,6 @@ public class MessageDAOImpl implements IMessageDAO {
             LocalDateTime time
     ) {
         List<Message> messageList = new ArrayList<>();
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT *" +
                 " FROM " +
@@ -333,10 +298,10 @@ public class MessageDAOImpl implements IMessageDAO {
                 " ORDER BY " +
                         "-" + CREATION_TIME_COLUMN_NAME + ";";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setObject(2, time);
 
@@ -347,14 +312,6 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return messageList;
@@ -376,8 +333,6 @@ public class MessageDAOImpl implements IMessageDAO {
             int messageCount
     ) {
         List<Message> messageList = new ArrayList<>();
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "SELECT *" +
                 " FROM " +
@@ -391,10 +346,10 @@ public class MessageDAOImpl implements IMessageDAO {
                 " LIMIT " +
                         " ? " + ";";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setObject(2, time);
             preparedStatement.setInt(3, messageCount);
@@ -406,14 +361,6 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return messageList;
@@ -424,15 +371,13 @@ public class MessageDAOImpl implements IMessageDAO {
             int id,
             String... columnNames
     ) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         Map<String, String> columnStringsMap = new HashMap<>();
         String sqlStatement = buildSelectByIdSqlRequest(columnNames);
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -450,14 +395,6 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return columnStringsMap;
@@ -468,15 +405,13 @@ public class MessageDAOImpl implements IMessageDAO {
             int id,
             String... columnNames
     ) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         Map<String, Integer> columnIntegerMap = new HashMap<>();
         String sqlStatement = buildSelectByIdSqlRequest(columnNames);
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement.toString())
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -494,14 +429,6 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return columnIntegerMap;
@@ -509,35 +436,19 @@ public class MessageDAOImpl implements IMessageDAO {
 
     @Override
     public String getColumnString(int id, String columnName) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
-
-        return getColumnString(connection, id, columnName);
-    }
-
-    @Override
-    public Integer getColumnInteger(int id, String columnName) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
-
-        return getColumnInteger(connection, id, columnName);
-    }
-
-    private String getColumnString(Connection connection, int id, String columnName) {
         String result = null;
 
         String sqlStatement =
                 "SELECT " +
                         columnName +
-                " FROM " +
+                        " FROM " +
                         MESSAGE_TABLE_NAME +
-                " WHERE " +
+                        " WHERE " +
                         ID_COLUMN_NAME + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -550,34 +461,26 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return result;
     }
 
-    private Integer getColumnInteger(Connection connection, int id, String columnName) {
+    @Override
+    public Integer getColumnInteger(int id, String columnName) {
         Integer result = null;
 
         String sqlStatement =
                 "SELECT " +
                         columnName +
-                " FROM " +
+                        " FROM " +
                         MESSAGE_TABLE_NAME +
-                " WHERE " +
+                        " WHERE " +
                         ID_COLUMN_NAME + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -587,63 +490,9 @@ public class MessageDAOImpl implements IMessageDAO {
             resultSet.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return result;
-    }
-
-    /**
-     * Get all of the messages that have been sent to a chat session
-     *
-     * @param connection Database Connection object
-     * @param sessionId Chat Session ID
-     *
-     * @return List of all messages from a Chat Session
-     */
-    private List<Message> getMessageList(Connection connection, int sessionId) {
-        List<Message> messageList = new ArrayList<>();
-        String sqlStatement =
-                "SELECT *" +
-                " FROM " +
-                        MESSAGE_TABLE_NAME +
-                " WHERE " +
-                        CHAT_SESSION_ID_COLUMN_NAME + "= ?";
-
-        if (connection != null) {
-            try (
-                    PreparedStatement preparedStatement =
-                            connection.prepareStatement(sqlStatement)
-            ) {
-
-                preparedStatement.setInt(1, sessionId);
-
-                ResultSet resultSet = preparedStatement.executeQuery();
-                messageList = generateMessageList(resultSet);
-
-                //Clean Up
-                preparedStatement.close();
-                resultSet.close();
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return messageList;
     }
 
     /**
@@ -687,8 +536,6 @@ public class MessageDAOImpl implements IMessageDAO {
     }
 
     private void deleteColumnRowsById(String column, int id) {
-        Connection connection =
-                DatabaseConnection.getDatabaseConnection();
         String sqlStatement =
                 "DELETE *" +
                 " FROM " +
@@ -696,25 +543,16 @@ public class MessageDAOImpl implements IMessageDAO {
                 " WHERE " +
                         column + " = ?;";
 
-        try (
-                PreparedStatement preparedStatement =
-                        connection.prepareStatement(sqlStatement)
-        ) {
+        try (Connection connection = DataSource.getConnection()) {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(sqlStatement);
+
             preparedStatement.setInt(1, id);
 
             preparedStatement.execute();
-
             preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
