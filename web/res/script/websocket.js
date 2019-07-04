@@ -21,6 +21,8 @@ class WebSocketClient {
     }
 
     connect() {
+        console.log("Attempting connection");
+
         try {
             this.webSocket = new WebSocket(
                 this.getServerUrl()
@@ -348,13 +350,15 @@ var client = new WebSocketClient(
 );
 
 document.onload = function () {
-    client.connect();
+    //client.connect();
+
+    // if (client.webSocket === null || !client.webSocket.isOpen()) {
+    //     client.connect();
+    //
+    //     if (!client.isOpen()) {
+    //         alert("Failed to open WebSocket connection, please refresh.")
+    //     }
+    // }
 };
 
-if (client.webSocket === null || !client.webSocket.isOpen()) {
-    client.connect();
-
-    if (!client.webSocket.isOpen()) {
-        alert("Failed to open WebSocket connection, please refresh.")
-    }
-}
+client.connect();

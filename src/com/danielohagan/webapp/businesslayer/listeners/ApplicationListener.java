@@ -1,4 +1,4 @@
-package com.danielohagan.webapp.businesslayer;
+package com.danielohagan.webapp.businesslayer.listeners;
 
 import com.danielohagan.webapp.datalayer.database.hikari.DataSource;
 
@@ -22,6 +22,7 @@ public class ApplicationListener implements ServletContextListener {
          You can initialize servlet context related data here.
       */
         System.out.println("Opening Application");
+
     }
 
     public void contextDestroyed(ServletContextEvent sce) {
@@ -31,8 +32,11 @@ public class ApplicationListener implements ServletContextListener {
       */
         System.out.println("Closing Application");
 
-        //Close DataSource
-        DataSource.close();
+        cleanUp();
 
+    }
+
+    private void cleanUp() {
+        DataSource.close();
     }
 }

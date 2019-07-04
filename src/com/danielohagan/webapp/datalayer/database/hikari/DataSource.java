@@ -12,15 +12,14 @@ public class DataSource {
 
     private static final String JDBC_ADMIN_USERNAME = "JDBC_ADMIN_USERNAME";
     private static final String JDBC_ADMIN_PASSWORD = "JDBC_ADMIN_PASSWORD";
-    private static final String LOCALHOST_URL = "JDBC_LOCALHOST_URL";
+    private static final String JDBC_CONNECTION_STRING = "JDBC_CONNECTION_STRING";
 
-    private static HikariConfig mConfig;
     private static HikariDataSource mDataSource;
 
     static {
-        mConfig = new HikariConfig();
+        HikariConfig mConfig = new HikariConfig();
 
-        mConfig.setJdbcUrl(System.getProperty(LOCALHOST_URL));
+        mConfig.setJdbcUrl(System.getProperty(JDBC_CONNECTION_STRING));
         mConfig.setDriverClassName(JDBC_DRIVER);
         mConfig.setUsername(System.getProperty(JDBC_ADMIN_USERNAME));
         mConfig.setPassword(System.getProperty(JDBC_ADMIN_PASSWORD));

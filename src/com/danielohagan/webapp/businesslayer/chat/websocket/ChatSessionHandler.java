@@ -177,7 +177,9 @@ public class ChatSessionHandler {
 
     public void sendToSession(Session session, JsonObject jsonObject) {
         try {
-            session.getBasicRemote().sendText(jsonObject.toString());
+            if (session != null && session.isOpen()) {
+                session.getBasicRemote().sendText(jsonObject.toString());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -352,6 +354,7 @@ public class ChatSessionHandler {
             for (Message message : messageList) {
                 JsonObject displayMessageJson =
                         mChatJsonBuilder.generateDisplayMessageJson(message, isNewMessages);
+
                 sendToSession(session, displayMessageJson);
             }
         }
