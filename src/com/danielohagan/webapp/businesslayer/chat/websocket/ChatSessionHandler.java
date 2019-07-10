@@ -226,6 +226,9 @@ public class ChatSessionHandler {
                 //Store in database
                 mMessageDAO.createNewMessage(message);
 
+                //Add to List
+                mChatSession.getMessageList().add(message);
+
                 //Send as JSON to web socket sessions
                 sendToAllSessions(mChatJsonBuilder.generateDisplayMessageJson(
                         message,
@@ -334,7 +337,7 @@ public class ChatSessionHandler {
     }
 
     private void sendChatSessionConfig(Session session) {
-        //TODO::
+        //TODO:: Send chat session specific configurations to session
 
     }
 

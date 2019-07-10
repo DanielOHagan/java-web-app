@@ -70,7 +70,7 @@ public class UserChatEndpoint {
 //                System.out.println("INFO: " + getInfoMessage(message));
                 break;
             case ERROR:
-//                System.out.println("ERROR: " + getErrorMessage(message));
+//                System.err.println("ERROR: " + getErrorMessage(message));
                 break;
             case CLOSE_PREVIOUS_CHAT_SESSION:
                 mChatSessionMap.get(chatSessionId).removeSession(session);
