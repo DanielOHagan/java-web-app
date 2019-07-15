@@ -19,35 +19,46 @@ import java.util.Map;
 
 public class UserDAOImpl implements IUserDAO {
 
-    private static final String SYSTEM_JDBC_ACCOUNT_TABLE_NAME =
-            "JDBC_ACCOUNT_TABLE_NAME";
-    private static final String SYSTEM_JDBC_ID_COLUMN_NAME =
-            "JDBC_ID_COLUMN_NAME";
-    private static final String SYSTEM_JDBC_USERNAME_COLUMN_NAME =
-            "JDBC_USERNAME_COLUMN_NAME";
-    private static final String SYSTEM_JDBC_EMAIL_COLUMN_NAME =
-            "JDBC_EMAIL_COLUMN_NAME";
-    private static final String SYSTEM_JDBC_PASSWORD_COLUMN_NAME =
-            "JDBC_PASSWORD_COLUMN_NAME";
-    private static final String SYSTEM_JDBC_STATUS_COLUMN_NAME =
-            "JDBC_STATUS_COLUMN_NAME";
-    private static final String SYSTEM_JDBC_CREATION_TIME_COLUMN_NAME =
-            "JDBC_CREATION_TIME_COLUMN_NAME";
+    /*
+    Environment variables commented out for testing on
+    AWS to speed up deployment time
+     */
+//    private static final String SYSTEM_JDBC_ACCOUNT_TABLE_NAME =
+//            "JDBC_ACCOUNT_TABLE_NAME";
+//    private static final String SYSTEM_JDBC_ID_COLUMN_NAME =
+//            "JDBC_ID_COLUMN_NAME";
+//    private static final String SYSTEM_JDBC_USERNAME_COLUMN_NAME =
+//            "JDBC_USERNAME_COLUMN_NAME";
+//    private static final String SYSTEM_JDBC_EMAIL_COLUMN_NAME =
+//            "JDBC_EMAIL_COLUMN_NAME";
+//    private static final String SYSTEM_JDBC_PASSWORD_COLUMN_NAME =
+//            "JDBC_PASSWORD_COLUMN_NAME";
+//    private static final String SYSTEM_JDBC_STATUS_COLUMN_NAME =
+//            "JDBC_STATUS_COLUMN_NAME";
+//    private static final String SYSTEM_JDBC_CREATION_TIME_COLUMN_NAME =
+//            "JDBC_CREATION_TIME_COLUMN_NAME";
 
     public static final String ACCOUNT_TABLE_NAME =
-            System.getProperty(SYSTEM_JDBC_ACCOUNT_TABLE_NAME);
+            "account_table";
+//            System.getProperty(SYSTEM_JDBC_ACCOUNT_TABLE_NAME);
     public static final String ID_COLUMN_NAME =
-            System.getProperty(SYSTEM_JDBC_ID_COLUMN_NAME);
+            "account_id";
+//            System.getProperty(SYSTEM_JDBC_ID_COLUMN_NAME);
     public static final String USERNAME_COLUMN_NAME =
-            System.getProperty(SYSTEM_JDBC_USERNAME_COLUMN_NAME);
+            "account_username";
+//            System.getProperty(SYSTEM_JDBC_USERNAME_COLUMN_NAME);
     public static final String EMAIL_COLUMN_NAME =
-            System.getProperty(SYSTEM_JDBC_EMAIL_COLUMN_NAME);
+            "account_email";
+//                System.getProperty(SYSTEM_JDBC_EMAIL_COLUMN_NAME);
     public static final String PASSWORD_COLUMN_NAME =
-            System.getProperty(SYSTEM_JDBC_PASSWORD_COLUMN_NAME);
+            "account_password";
+//            System.getProperty(SYSTEM_JDBC_PASSWORD_COLUMN_NAME);
     public static final String STATUS_COLUMN_NAME =
-            System.getProperty(SYSTEM_JDBC_STATUS_COLUMN_NAME);
+            "account_status";
+//            System.getProperty(SYSTEM_JDBC_STATUS_COLUMN_NAME);
     public static final String CREATION_TIME_COLUMN_NAME =
-            System.getProperty(SYSTEM_JDBC_CREATION_TIME_COLUMN_NAME);
+            "account_creation_time";
+//            System.getProperty(SYSTEM_JDBC_CREATION_TIME_COLUMN_NAME);
 
     public static final int EMAIL_MAX_LENGTH = 32;
     public static final int EMAIL_MIN_LENGTH = 5;
@@ -173,7 +184,7 @@ public class UserDAOImpl implements IUserDAO {
             preparedStatement.setString(4, password);
             preparedStatement.setString(
                     5,
-                    user.getUserStatus().getDatabaseEnumStringValue()
+                    user.getUserStatus().toString()
             );
 
             preparedStatement.execute();
@@ -428,7 +439,7 @@ public class UserDAOImpl implements IUserDAO {
 
             preparedStatement.setString(
                     1,
-                    userStatus.getDatabaseEnumStringValue()
+                    userStatus.toString()
             );
             preparedStatement.setInt(2, id);
 
@@ -908,7 +919,7 @@ public class UserDAOImpl implements IUserDAO {
 
         if (stringValue != null && !stringValue.isEmpty()) {
             for (UserStatus userStatus : UserStatus.values()) {
-                if (userStatus.getDatabaseEnumStringValue().equals(stringValue)) {
+                if (userStatus.toString().equals(stringValue)) {
                     return userStatus;
                 }
             }

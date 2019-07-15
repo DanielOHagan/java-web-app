@@ -1,6 +1,7 @@
 "use strict";
 
 const MESSAGE_PREFIX = "message-";
+const SESSION_PREFIX = "chat-session-";
 const SESSION_USER_PREFIX  = "session-user-";
 
 class WebSocketClient {
@@ -35,13 +36,7 @@ class WebSocketClient {
             this.webSocket.onmessage = function(event) {
                 //Print message to console for debugging
                 var message = event.data;
-                console.log(
-                    "onMessage:" + JSON.stringify(
-                        message,
-                    null,
-                    4
-                    )
-                );
+                console.log("onMessage:" + JSON.stringify(message, null, 4));
 
                 //Decode message
                 decodeMessage(message)
@@ -54,13 +49,7 @@ class WebSocketClient {
             };
 
             this.webSocket.onclose = function(event) {
-                console.log(
-                    "onClose:" + JSON.stringify(
-                        event,
-                    null,
-                    4
-                    )
-                );
+                console.log("onClose:" + JSON.stringify(event, null, 4));
             };
 
             this.webSocket.onError = function(event) {
@@ -74,6 +63,10 @@ class WebSocketClient {
 
     getStatus() {
         return this.webSocket.readyState;
+    }
+
+    resetChatSession() {
+        this.chatSessionId = -1;
     }
 
     send(message) {
@@ -99,11 +92,14 @@ class WebSocketClient {
     }
 
     openChatSession() {
+        //Initialise a chat session connection
+
         var initAction = {
             action: "init",
             userId: userId,
             chatSessionId: this.chatSessionId
         };
+
         client.send(JSON.stringify(initAction))
     }
 
@@ -113,6 +109,7 @@ class WebSocketClient {
             userId: userId,
             chatSessionId: this.chatSessionId
         };
+
         client.send(JSON.stringify(closeAction));
     }
 
@@ -139,10 +136,7 @@ function changeChatSession(client, chatSessionId) {
         }
 
         //Clear display
-        document.getElementById("chatMessageContainer").innerHTML = "";
-        document.getElementById("chatSessionAdminList").innerHTML = "";
-        document.getElementById("chatSessionMembersList").innerHTML = "";
-        document.getElementById("chatSessionObserversList").innerHTML = "";
+        clearChatSessionDisplay();
 
         //Change to new ID
         client.chatSessionId = chatSessionId;
@@ -167,6 +161,7 @@ function displayNewMessage(message) {
 }
 
 function displayOldMessage(message) {
+    //Add older message above currently displayed messages
 
 }
 
@@ -188,7 +183,12 @@ function sendMessage() {
     var inputNode = document.getElementById("chatDialogueBoxMessageInput");
     var messageBody = inputNode.value;
 
-    if (messageBody != null && messageBody.length > 0) {
+    if (
+        messageBody != null &&
+        messageBody.length > 0 &&
+        client !== null &&
+        client.isOpen()
+    ) {
         var addMessageAction = {
             action: "addMessage",
             userId: userId,
@@ -196,22 +196,23 @@ function sendMessage() {
             senderId: userId,
             chatSessionId: client.chatSessionId
         };
-        if (client.isOpen()) {
-            client.send(JSON.stringify(addMessageAction));
-        }
 
+        client.send(JSON.stringify(addMessageAction));
+
+        //Clear Input box
         inputNode.value = "";
     }
 }
 
 function deleteMessage(messageId) {
-    var deleteMessageAction = {
-        action: "deleteMessage",
-        userId: userId,
-        chatSessionId: client.chatSessionId
-    };
+    if (client !== null && client.isOpen()) {
+        var deleteMessageAction = {
+            action: "deleteMessage",
+            userId: userId,
+            chatSessionId: client.chatSessionId,
+            messageId: messageId
+        };
 
-    if (client.isOpen()) {
         client.send(JSON.stringify(deleteMessageAction))
     }
 }
@@ -222,6 +223,14 @@ function decodeMessage(messageData) {
     switch (message.action) {
         case "init":
             // updateDisplay(message);
+            break;
+
+        case "info":
+
+            break;
+
+        case "error":
+
             break;
 
         case "clientDisplayNewMessage":
@@ -238,7 +247,7 @@ function decodeMessage(messageData) {
             break;
 
         case "clientAddChatSession":
-            displayNewChatSession(message);
+            addChatSessionToDisplay(message);
             break;
         case "clientRemoveChatSession":
             removeChatSessionFromDisplay(message);
@@ -259,29 +268,73 @@ function decodeMessage(messageData) {
             break;
 
         default:
-            console.error("Failed to read action: " + message.action);
+            console.warn("Client did not catch action: " + message.action);
             break;
     }
 }
 
-function addUserToSession() {
+function addUserToSession(userId, targetUserId) {
+    if (client !== null && client.isOpen()) {
+        var addNewUserMessageAction = {
+            action: "addUser",
+            userId: userId,
+            targetUserId: targetUserId,
+            chatSessionId: client.chatSessionId
+        };
 
+        client.send(JSON.stringify(addNewUserMessageAction));
+    }
 }
 
-function removeUserFromSession() {
+function removeUserFromSession(userId, targetUserId, chatSessionId) {
+    if (client !== null && client.isOpen()) {
+        var removeUserAction = {
+            action: "removeUser",
+            userId: userId,
+            targetUserId: targetUserId,
+            chatSessionId: chatSessionId
+        };
 
+        client.send(JSON.stringify(removeUserAction));
+    }
 }
 
-function changeUserPermissionLevel() {
+function changeUserPermissionLevel(
+    userId,
+    targetUserId,
+    targetPermissionLevel,
+    chatSessionId
+) {
+    if (client !== null && client.isOpen()) {
+        var changeUserPermissionAction = {
+            action: "changeUserPermission",
+            userId: userId,
+            targetUserId: targetUserId,
+            targetPermissionLevel: targetPermissionLevel,
+            chatSessionId: chatSessionId
+        };
 
+        client.send(JSON.stringify(changeUserPermissionAction));
+    }
 }
 
 function createNewChatSession() {
+    if (client !== null && client.isOpen()) {
+        var createNewChatSessionMessageAction = {
+            action: "createNewChatSession",
+            userId: userId,
+        };
 
+        client.send(JSON.stringify(createNewChatSessionMessageAction));
+    }
 }
 
 function addNewUser() {
+    var targetUserId = prompt("Input new User ID", "-1");
 
+    if (targetUserId !== "-1") {
+        addUserToSession(userId, parseInt(targetUserId));
+    }
 }
 
 function displayChatUser(message) {
@@ -322,8 +375,25 @@ function removeUserFromDisplay(message) {
     }
 }
 
-function displayNewChatSession(message) {
+function addChatSessionToDisplay(message) {
+    //Add a list item for Chat Session
+    var chatSessionListNode = document.getElementById("chatSessionList");
 
+    var chatSessionListItem = document.createElement("li");
+    chatSessionListItem.setAttribute(
+        "id",
+        SESSION_PREFIX + message.chatSessionId
+    );
+    chatSessionListItem.setAttribute("class", "selectable");
+    chatSessionListItem.setAttribute(
+        "onclick",
+        "changeChatSession(client, " + message.chatSessionId + ")"
+    );
+
+    var listItemBodyTag = document.createElement("p");
+    listItemBodyTag.innerHTML = message.chatSessionName;
+
+    chatSessionListNode.appendChild(chatSessionListItem);
 }
 
 function displaySessionName(message) {
@@ -335,11 +405,53 @@ function displaySessionName(message) {
 }
 
 function removeChatSessionFromDisplay(message) {
+    var chatSessionId = message.chatSessionId;
 
+    if (client.chatSessionId === chatSessionId) {
+        client.resetChatSession();
+        clearChatSessionDisplay();
+    }
+
+    var chatSessionListItem = document.getElementById(SESSION_PREFIX + chatSessionId);
+
+    if (chatSessionListItem !== null) {
+        chatSessionListItem.delete();
+    }
 }
 
 function displayUpdatedUserPermission(message) {
 
+}
+
+function clearChatSessionDisplay() {
+    document.getElementById("chatMessageContainer").innerHTML = "";
+    document.getElementById("chatSessionAdminList").innerHTML = "";
+    document.getElementById("chatSessionMembersList").innerHTML = "";
+    document.getElementById("chatSessionObserversList").innerHTML = "";
+}
+
+function leaveChatSession(userId, chatSessionId) {
+    if (confirm("Are you sure you want to leave the Chat Session?")) {
+
+    }
+}
+
+function kickUserFromChatSession(userId, targetUserId, chatSessionId) {
+
+}
+
+function deleteChatSession(chatSessionId) {
+    if (confirm("Are you sure you want to delete the Chat Session?")) {
+        if (client !== null && client.isOpen()) {
+            var deleteChatSessionAction = {
+                action: "deleteChatSession",
+                userId: userId,
+                chatSessionId: chatSessionId
+            };
+
+            client.send(JSON.stringify(deleteChatSessionAction));
+        }
+    }
 }
 
 var client = new WebSocketClient(
@@ -360,5 +472,12 @@ document.onload = function () {
     //     }
     // }
 };
+
+document.onclose = function() {
+    if (client !== null && client.isOpen()) {
+        client.disconnect();
+    }
+};
+
 
 client.connect();

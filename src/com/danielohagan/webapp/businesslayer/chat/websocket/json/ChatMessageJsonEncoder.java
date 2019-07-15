@@ -12,30 +12,30 @@ import javax.json.JsonObject;
 import javax.json.spi.JsonProvider;
 import java.util.List;
 
-public class ChatJsonBuilder {
+public class ChatMessageJsonEncoder {
 
     public JsonObject generateUpdateUserPermission(ChatSessionUser user) {
         JsonProvider provider = JsonProvider.provider();
         return provider.createObjectBuilder()
                 .add(
-                        ServerActionEnum.ACTION.getAttributeString(),
-                        ClientActionEnum.UPDATE_USER_PERMISSION.getAttributeString()
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.UPDATE_USER_PERMISSION.toString()
                 )
                 .add(
-                        AttributeEnum.USER_ID.getAttributeString(),
+                        AttributeEnum.USER_ID.toString(),
                         user.getId()
                 )
                 .add(
-                        AttributeEnum.USERNAME.getAttributeString(),
+                        AttributeEnum.USERNAME.toString(),
                         user.getUsername()
                 )
                 .add(
-                        AttributeEnum.CHAT_SESSION_ID.getAttributeString(),
+                        AttributeEnum.CHAT_SESSION_ID.toString(),
                         user.getChatSessionId()
                 )
                 .add(
-                        AttributeEnum.PERMISSION_LEVEL.getAttributeString(),
-                        user.getPermissionLevel().getDatabaseEnumStringValue()
+                        AttributeEnum.PERMISSION_LEVEL.toString(),
+                        user.getPermissionLevel().toString()
                 )
                 .build();
     }
@@ -44,11 +44,11 @@ public class ChatJsonBuilder {
         JsonProvider provider = JsonProvider.provider();
         return provider.createObjectBuilder()
                 .add(
-                        ServerActionEnum.ACTION.getAttributeString(),
-                        ServerActionEnum.DELETE_MESSAGE.getAttributeString()
+                        ServerActionEnum.ACTION.toString(),
+                        ServerActionEnum.DELETE_MESSAGE.toString()
                 )
                 .add(
-                        AttributeEnum.ID.getAttributeString(),
+                        AttributeEnum.ID.toString(),
                         messageId
                 )
                 .build();
@@ -59,13 +59,13 @@ public class ChatJsonBuilder {
 
         return provider.createObjectBuilder()
                 .add(
-                        ServerActionEnum.ACTION.getAttributeString(),
+                        ServerActionEnum.ACTION.toString(),
                         isNewMessage ?
-                                ClientActionEnum.DISPLAY_MESSAGE.getAttributeString() :
-                                ClientActionEnum.DISPLAY_OLDER_MESSAGE.getAttributeString()
+                                ClientActionEnum.DISPLAY_MESSAGE.toString() :
+                                ClientActionEnum.DISPLAY_OLDER_MESSAGE.toString()
                 )
                 .add(
-                        AttributeEnum.MESSAGE.getAttributeString(),
+                        AttributeEnum.MESSAGE.toString(),
                         generateChatMessageJson(message)
                 )
                 .build();
@@ -76,24 +76,24 @@ public class ChatJsonBuilder {
 
         return provider.createObjectBuilder()
                 .add(
-                        ServerActionEnum.ACTION.getAttributeString(),
-                        ClientActionEnum.DISPLAY_USER.getAttributeString()
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.DISPLAY_USER.toString()
                 )
                 .add(
-                        AttributeEnum.USERNAME.getAttributeString(),
+                        AttributeEnum.USERNAME.toString(),
                         user.getUsername()
                 )
                 .add(
-                        AttributeEnum.ID.getAttributeString(),
+                        AttributeEnum.ID.toString(),
                         user.getId()
                 )
                 .add(
-                        AttributeEnum.STATUS.getAttributeString(),
-                        user.getUserStatus().getDatabaseEnumStringValue()
+                        AttributeEnum.STATUS.toString(),
+                        user.getUserStatus().toString()
                 )
                 .add(
-                        AttributeEnum.PERMISSION_LEVEL.getAttributeString(),
-                        user.getPermissionLevel().getDatabaseEnumStringValue()
+                        AttributeEnum.PERMISSION_LEVEL.toString(),
+                        user.getPermissionLevel().toString()
                 )
                 .build();
     }
@@ -116,11 +116,11 @@ public class ChatJsonBuilder {
 
             messageListJson = provider.createObjectBuilder()
                     .add(
-                            ServerActionEnum.ACTION.getAttributeString(),
-                            ClientActionEnum.DISPLAY_MESSAGE_LIST.getAttributeString()
+                            ServerActionEnum.ACTION.toString(),
+                            ClientActionEnum.DISPLAY_MESSAGE_LIST.toString()
                     )
                     .add(
-                            AttributeEnum.MESSAGE_LIST.getAttributeString(),
+                            AttributeEnum.MESSAGE_LIST.toString(),
                             messageArrayJson
                     )
                     .build();
@@ -137,30 +137,30 @@ public class ChatJsonBuilder {
 
             messageJson = provider.createObjectBuilder()
                     .add(
-                            AttributeEnum.ID.getAttributeString(),
+                            AttributeEnum.ID.toString(),
                             message.getId()
                     )
                     .add(
-                            AttributeEnum.BODY.getAttributeString(),
+                            AttributeEnum.BODY.toString(),
                             message.getBody()
                     )
                     .add(
-                            AttributeEnum.SENDER_ID.getAttributeString(),
+                            AttributeEnum.SENDER_ID.toString(),
                             message.getSenderId()
                     )
                     .add(
-                            AttributeEnum.SENDER_USERNAME.getAttributeString(),
+                            AttributeEnum.SENDER_USERNAME.toString(),
                             new UserDAOImpl().getColumnString(
                                     message.getSenderId(),
                                     UserDAOImpl.USERNAME_COLUMN_NAME
                             )
                     )
                     .add(
-                            AttributeEnum.CHAT_SESSION_ID.getAttributeString(),
+                            AttributeEnum.CHAT_SESSION_ID.toString(),
                             message.getChatSessionId()
                     )
                     .add(
-                            AttributeEnum.CREATION_TIME.getAttributeString(),
+                            AttributeEnum.CREATION_TIME.toString(),
                             message.getCreationTime().toString()
                     )
                     .build();
@@ -174,12 +174,34 @@ public class ChatJsonBuilder {
 
         return provider.createObjectBuilder()
                 .add(
-                        ServerActionEnum.ACTION.getAttributeString(),
-                        ClientActionEnum.DISPLAY_CHAT_SESSION_NAME.getAttributeString()
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.DISPLAY_CHAT_SESSION_NAME.toString()
                 )
                 .add(
-                        AttributeEnum.CHAT_SESSION_NAME.getAttributeString(),
+                        AttributeEnum.CHAT_SESSION_NAME.toString(),
                         sessionName
+                )
+                .build();
+    }
+
+    public JsonObject generateAddChatSession(
+            int chatSessionId,
+            String chatSessionName
+    ) {
+        JsonProvider provider = JsonProvider.provider();
+
+        return provider.createObjectBuilder()
+                .add(
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.ADD_CHAT_SESSION.toString()
+                )
+                .add(
+                        AttributeEnum.CHAT_SESSION_ID.toString(),
+                        chatSessionId
+                )
+                .add(
+                        AttributeEnum.CHAT_SESSION_NAME.toString(),
+                        chatSessionName
                 )
                 .build();
     }

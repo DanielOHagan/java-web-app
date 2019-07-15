@@ -35,10 +35,13 @@ public enum ServerActionEnum implements IAttribute {
     }
 
     @Override
-    public String getAttributeString() {
+    public String toString() {
         return mActionString;
     }
 
+    /*
+    Lists containing the required User Permissions of Server Actions
+     */
     public static class PermissionLists {
         private static EnumMap<ServerActionEnum, List<ChatPermissionLevel>> mActionPermissionLevelMap;
 

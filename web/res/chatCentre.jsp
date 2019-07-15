@@ -19,7 +19,7 @@
             <h2>My Chat Sessions:</h2>
             <ul id="chatSessionList">
                 <c:forEach items="${requestScope.chatSessionList}" var="chatSession">
-                    <li id="chatSession-${chatSession.id}" onclick="changeChatSession(client, ${chatSession.id})">
+                    <li id="chatSession-${chatSession.id}" class="selectable" onclick="changeChatSession(client, ${chatSession.id})">
                         <p>${chatSession.name}</p>
                     </li>
                 </c:forEach>

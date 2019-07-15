@@ -8,8 +8,6 @@ import java.util.List;
 
 public class ErrorResponse implements IErrorResponseManager {
 
-    //TODO:: Pass an object of this to the presentation layer instead of a single Error Type
-
     private List<IErrorType> mErrorList;
 
     public ErrorResponse() {
@@ -181,6 +179,10 @@ public class ErrorResponse implements IErrorResponseManager {
                         return ErrorSeverity.FATAL;
                 }
             }
+        }
+
+        if (currentSeverity == 0) {
+            errorSeverity = ErrorSeverity.INFO;
         }
 
         return errorSeverity;

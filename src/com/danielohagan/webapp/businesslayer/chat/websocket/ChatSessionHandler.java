@@ -1,7 +1,8 @@
 package com.danielohagan.webapp.businesslayer.chat.websocket;
 
 import com.danielohagan.webapp.businesslayer.chat.websocket.attrributes.AttributeEnum;
-import com.danielohagan.webapp.businesslayer.chat.websocket.json.ChatJsonBuilder;
+import com.danielohagan.webapp.businesslayer.chat.websocket.json.ChatMessageJsonEncoder;
+import com.danielohagan.webapp.businesslayer.chat.websocket.json.ChatMessageJsonDecoder;
 import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
 import com.danielohagan.webapp.businesslayer.entities.chat.ChatSessionUser;
 import com.danielohagan.webapp.businesslayer.entities.chat.Message;
@@ -38,14 +39,16 @@ public class ChatSessionHandler {
     private List<Session> mSessionList; //List of the WebSocket Clients
     private ChatSessionDAOImpl mChatSessionDAO;
     private MessageDAOImpl mMessageDAO;
-    private ChatJsonBuilder mChatJsonBuilder;
+    private ChatMessageJsonEncoder mChatMessageJsonEncoder;
+    private ChatMessageJsonDecoder mChatMessageJsonDecoder;
 
     public ChatSessionHandler(int chatSessionId) {
         CHAT_SESSION_ID = chatSessionId;
         mChatSessionDAO = new ChatSessionDAOImpl();
         mMessageDAO = new MessageDAOImpl();
         mSessionList = new ArrayList<>();
-        mChatJsonBuilder = new ChatJsonBuilder();
+        mChatMessageJsonEncoder = new ChatMessageJsonEncoder();
+        mChatMessageJsonDecoder = new ChatMessageJsonDecoder();
 
         //Build the Chat Session
         mChatSession = mChatSessionDAO.getById(CHAT_SESSION_ID);
@@ -64,7 +67,7 @@ public class ChatSessionHandler {
         mChatSessionDAO = new ChatSessionDAOImpl();
         mMessageDAO = new MessageDAOImpl();
         mSessionList = new ArrayList<>();
-        mChatJsonBuilder = new ChatJsonBuilder();
+        mChatMessageJsonEncoder = new ChatMessageJsonEncoder();
 
         mChatSession = chatSession;
     }
@@ -73,7 +76,10 @@ public class ChatSessionHandler {
         //Store in database
         mChatSessionDAO.createNewSession(mChatSession, creatorId);
 
-        //Add Chat Session to client's chat session list
+        //Add Chat Session to client's Chat Session list
+        sendAddNewChatSession(session);
+
+        //Display the Chat Session
         sendDisplayChatSession(session);
     }
 
@@ -86,15 +92,15 @@ public class ChatSessionHandler {
     }
 
     public void addUser(String message) {
-        Integer userId = WebSocketMessageUtils.getUserId(message);
-        Integer sessionId = WebSocketMessageUtils.getChatSessionId(message);
-        Integer newUserId = WebSocketMessageUtils.getNewUserId(message);
+        Integer userId = mChatMessageJsonDecoder.getUserId(message);
+        Integer sessionId = mChatMessageJsonDecoder.getChatSessionId(message);
+        Integer newUserId = mChatMessageJsonDecoder.getTargetUserId(message);
 
         //TODO:: This
 
         ErrorResponse errorResponse = addUserGetErrors(userId, sessionId, newUserId);
 
-        if (errorResponse.highestSeverity() != ErrorSeverity.INFO) {
+        if (errorResponse.highestSeverity() == ErrorSeverity.INFO) {
             mChatSessionDAO.addUserToSession(
                     sessionId,
                     newUserId,
@@ -102,16 +108,20 @@ public class ChatSessionHandler {
             );
 
             ChatSessionUser chatSessionUser = new ChatSessionUser(
-                    new UserDAOImpl().getById(userId),
+                    new UserDAOImpl().getById(newUserId),
                     sessionId,
-                    mChatSessionDAO.getUserPermissionLevel(userId, sessionId)
+                    ChatPermissionLevel.MEMBER
             );
 
-            sendToAllSessions(mChatJsonBuilder.generateDisplayUserJson(chatSessionUser));
+            sendToAllSessions(mChatMessageJsonEncoder.generateDisplayUserJson(chatSessionUser));
         }
     }
 
     public void removeUser(String message) {
+        Integer userId = mChatMessageJsonDecoder.getUserId(message);
+        Integer sessionId = mChatMessageJsonDecoder.getChatSessionId(message);
+        Integer targetUserId = mChatMessageJsonDecoder.getTargetUserId(message);
+
 
     }
 
@@ -133,7 +143,7 @@ public class ChatSessionHandler {
 
         if (message != null) {
             mChatSession.getMessageList().remove(message);
-            JsonObject removeMessage = mChatJsonBuilder.generateDeleteMessage(id);
+            JsonObject removeMessage = mChatMessageJsonEncoder.generateDeleteMessage(id);
             sendToAllSessions(removeMessage);
         }
     }
@@ -198,9 +208,9 @@ public class ChatSessionHandler {
                 JsonObject jsonObject = reader.readObject();
 
                 body = jsonObject.getString(
-                        AttributeEnum.BODY.getAttributeString()
+                        AttributeEnum.BODY.toString()
                 );
-                userId = WebSocketMessageUtils.getUserId(jsonMessage);
+                userId = mChatMessageJsonDecoder.getUserId(jsonMessage);
             }
 
             if (body != null && userId != null) {
@@ -230,7 +240,7 @@ public class ChatSessionHandler {
                 mChatSession.getMessageList().add(message);
 
                 //Send as JSON to web socket sessions
-                sendToAllSessions(mChatJsonBuilder.generateDisplayMessageJson(
+                sendToAllSessions(mChatMessageJsonEncoder.generateDisplayMessageJson(
                         message,
                         true
                 ));
@@ -249,8 +259,8 @@ public class ChatSessionHandler {
     }
 
     public void deleteChatSession(String message, Session session) {
-        Integer sessionId = WebSocketMessageUtils.getChatSessionId(message);
-        Integer userId = WebSocketMessageUtils.getUserId(message);
+        Integer sessionId = mChatMessageJsonDecoder.getChatSessionId(message);
+        Integer userId = mChatMessageJsonDecoder.getUserId(message);
 
         if (
                 sessionId != null &&
@@ -274,29 +284,57 @@ public class ChatSessionHandler {
 
         //TODO::
 
-//        JsonObject removeChatSessionJson = mChatJsonBuilder.generateRemoveChatSessionJson(sessionId);
+//        JsonObject removeChatSessionJson = mChatMessageJsonEncoder.generateRemoveChatSessionJson(sessionId);
 //        sendToAllSessions(removeChatSessionJson);
     }
 
+    private void sendAddNewChatSession(Session session) {
+        //Send message to client instructing to add
+        //new Chat Session to display list
+        JsonObject addNewChatSessionJson =
+                mChatMessageJsonEncoder.generateAddChatSession(
+                        mChatSession.getId(),
+                        mChatSession.getName()
+                );
+
+        sendToSession(session, addNewChatSessionJson);
+    }
+
     public void editMessage(String message, Session session) {
-        Integer messageId = WebSocketMessageUtils.getMessageId(message);
-        Integer userId = WebSocketMessageUtils.getUserId(message);
-        Integer sessionId = WebSocketMessageUtils.getChatSessionId(message);
+        Integer messageId = mChatMessageJsonDecoder.getMessageId(message);
+        Integer userId = mChatMessageJsonDecoder.getUserId(message);
+        Integer chatSessionId = mChatMessageJsonDecoder.getChatSessionId(message);
+        String newMessageBody = null;
+        ChatPermissionLevel permissionLevel;
 
         //TODO: This
 
-        //Check User has permission
-//        if (has permission) {
-//            //Change in database
-//
-//            //Change in mMessageList
-//            mChatSession.getMessageById(messageId).setBody();
-//
-//            //Send update message to clients
-//
-//        } else {
-//            sendInfo(session, ChatErrorType.PERMISSION_CHECK_FAILED_UPDATE_MESSAGE);
-//        }
+        if (messageId != null && userId != null && chatSessionId != null) {
+            permissionLevel =
+                    mChatSessionDAO.getUserPermissionLevel(chatSessionId, userId);
+
+            //Check User has permission
+            if (
+                    permissionLevel != ChatPermissionLevel.OBSERVER &&
+                    permissionLevel != ChatPermissionLevel.NULL
+            ) {
+                newMessageBody = mChatMessageJsonDecoder.getMessageBody(message);
+
+                if (newMessageBody != null) {
+                    //Change in database
+                    mMessageDAO.updateMessageBody(messageId, newMessageBody);
+
+                    //Change in mMessageList
+                    mChatSession.getMessageById(messageId).setBody(newMessageBody);
+
+                    //Send update message to clients
+                    sendDisplayUpdateMessageBody(messageId, newMessageBody);
+                }
+
+            } else {
+                sendInfo(session, ChatErrorType.PERMISSION_CHECK_FAILED_UPDATE_MESSAGE);
+            }
+        }
     }
 
     private boolean isValidJsonMessage(String jsonMessage) {
@@ -320,13 +358,10 @@ public class ChatSessionHandler {
     }
 
     public void sendDisplayChatSession(Session session) {
-        //Tell session to change to current Chat Session
-        //TODO: Maybe have JS clear the old session display instead of sending a message from
-        // the server telling the client to do so anyway
-
         //Tell session to display chat session specifics
         sendChatSessionConfig(session);
 
+        //Update name
         sendDisplayChatSessionName(session);
 
         //Tell session to display existing messages
@@ -343,9 +378,13 @@ public class ChatSessionHandler {
 
     private void sendDisplayChatSessionName(Session session) {
         JsonObject displayName =
-                mChatJsonBuilder.generateChatSessionName(mChatSession.getName());
+                mChatMessageJsonEncoder.generateChatSessionName(mChatSession.getName());
 
         sendToSession(session, displayName);
+    }
+
+    private void sendDisplayUpdateMessageBody(int messageId, String messageBody) {
+        //TODO:: This
     }
 
     private void sendDisplayMessagesToSession(
@@ -356,7 +395,7 @@ public class ChatSessionHandler {
         if (messageList != null && messageList.size() > 0) {
             for (Message message : messageList) {
                 JsonObject displayMessageJson =
-                        mChatJsonBuilder.generateDisplayMessageJson(message, isNewMessages);
+                        mChatMessageJsonEncoder.generateDisplayMessageJson(message, isNewMessages);
 
                 sendToSession(session, displayMessageJson);
             }
@@ -366,7 +405,7 @@ public class ChatSessionHandler {
     private void sendDisplayUsersToSession(List<ChatSessionUser> userList, Session session) {
         if (userList != null && userList.size() > 0) {
             for (ChatSessionUser user : userList) {
-                JsonObject displayMessageJson = mChatJsonBuilder.generateDisplayUserJson(user);
+                JsonObject displayMessageJson = mChatMessageJsonEncoder.generateDisplayUserJson(user);
                 sendToSession(session, displayMessageJson);
             }
         }
@@ -382,9 +421,14 @@ public class ChatSessionHandler {
         if (userId == null || sessionId == null || newUserId == null) {
             errorResponse.add(ChatErrorType.UNABLE_TO_RETRIEVE_REQUIRED_ID);
         } else {
-            //If is in Chat Session
+            //If User is in Chat Session
             if (!mChatSessionDAO.userIsInChatSession(userId, sessionId)) {
                 errorResponse.add(ChatErrorType.ACCOUNT_DOES_NOT_HAVE_ACCESS_TO_SESSION);
+            }
+
+            //If New User is in Chat Session
+            if (mChatSessionDAO.userIsInChatSession(newUserId, sessionId)) {
+                errorResponse.add(ChatErrorType.NEW_USER_ALREADY_IN_SESSION);
             }
 
             //If has permission

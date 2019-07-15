@@ -20,12 +20,7 @@ public enum UserStatus implements IDatabaseEnum {
     }
 
     @Override
-    public String getDatabaseEnumStringValue() {
-        return mDatabaseEnumStringValue;
-    }
-
-    @Override
-    public int getDatabaseEnumColumnValue() {
+    public int asIntValue() {
         return mDatabaseEnumColumnValue;
     }
 

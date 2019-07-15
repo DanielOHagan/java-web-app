@@ -2,6 +2,8 @@ package com.danielohagan.webapp.datalayer.dao.databaseenums;
 
 public enum ChatPermissionLevel implements IDatabaseEnum {
 
+    //TODO:: Enforce permissions
+
     NULL("NULL", 0),
 
     /* Observer can access the Chat Session and view messages but can not change anything */
@@ -25,12 +27,7 @@ public enum ChatPermissionLevel implements IDatabaseEnum {
     }
 
     @Override
-    public String getDatabaseEnumStringValue() {
-        return mDatabaseEnumStringValue;
-    }
-
-    @Override
-    public int getDatabaseEnumColumnValue() {
+    public int asIntValue() {
         return mDatabaseEnumColumnValue;
     }
 

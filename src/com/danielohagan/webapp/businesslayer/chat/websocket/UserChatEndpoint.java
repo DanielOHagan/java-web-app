@@ -1,6 +1,7 @@
 package com.danielohagan.webapp.businesslayer.chat.websocket;
 
 import com.danielohagan.webapp.businesslayer.chat.websocket.attrributes.ServerActionEnum;
+import com.danielohagan.webapp.businesslayer.chat.websocket.json.ChatMessageJsonDecoder;
 import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
 import com.danielohagan.webapp.datalayer.dao.implementations.ChatSessionDAOImpl;
 import com.danielohagan.webapp.utils.Random;
@@ -22,69 +23,76 @@ public class UserChatEndpoint {
 
     @OnOpen
     public void onOpen(Session session) {
-        System.out.println("Socket Open");
+        if (session != null) {
+            System.out.println("Socket Open: " + session.getId());
+        } else {
+            System.out.println("Socket Open: UNKNOWN SESSION");
+        }
     }
 
     @OnMessage
     public String onMessage(String message, Session session) {
-        System.out.println("Socket Received Message: " + message);
+        if (session != null) {
+            ChatMessageJsonDecoder chatMessageJsonDecoder = new ChatMessageJsonDecoder();
+            System.out.println("Socket: " + session.getId() + " -- Received Message: " + message);
 
-        ServerActionEnum action = WebSocketMessageUtils.decodeMessageAction(message);
-        Integer chatSessionId = WebSocketMessageUtils.getChatSessionId(message);
+            ServerActionEnum action = chatMessageJsonDecoder.decodeMessageAction(message);
+            Integer chatSessionId = chatMessageJsonDecoder.getChatSessionId(message);
 
-        switch (action) {
-            //TODO:: Validation for EACH action
-            case INIT:
-                initChatSession(message, session);
-                break;
-            case CLOSE:
-                closeSession(message, session);
-                break;
-            case ADD_MESSAGE:
-                mChatSessionMap.get(chatSessionId).addNewMessage(message);
-                break;
-            case DELETE_MESSAGE:
-                mChatSessionMap.get(chatSessionId).deleteMessage(message);
-                break;
-            case EDIT_MESSAGE:
-                mChatSessionMap.get(chatSessionId).editMessage(message, session);
-                break;
-            case ADD_USER:
-                mChatSessionMap.get(chatSessionId).addUser(message);
-                break;
-            case REMOVE_USER:
-                mChatSessionMap.get(chatSessionId).removeUser(message);
-                break;
-            case CHANGE_USER_PERMISSION:
-                mChatSessionMap.get(chatSessionId).updateUserPermission(message);
-                break;
-            case CREATE_NEW_CHAT_SESSION:
-                Integer creatorId = WebSocketMessageUtils.getUserId(message);
-                createNewChatSession(creatorId, session);
-                break;
-            case DELETE_CHAT_SESSION:
-                mChatSessionMap.get(chatSessionId).deleteChatSession(message, session);
-                mChatSessionMap.remove(chatSessionId);
-                break;
-            case INFO:
+            switch (action) {
+                //TODO:: Validation for EACH action
+                case INIT:
+                    initChatSession(message, session);
+                    break;
+                case CLOSE:
+                    closeSession(message, session);
+                    break;
+                case ADD_MESSAGE:
+                    mChatSessionMap.get(chatSessionId).addNewMessage(message);
+                    break;
+                case DELETE_MESSAGE:
+                    mChatSessionMap.get(chatSessionId).deleteMessage(message);
+                    break;
+                case EDIT_MESSAGE:
+                    mChatSessionMap.get(chatSessionId).editMessage(message, session);
+                    break;
+                case ADD_USER:
+                    mChatSessionMap.get(chatSessionId).addUser(message);
+                    break;
+                case REMOVE_USER:
+                    mChatSessionMap.get(chatSessionId).removeUser(message);
+                    break;
+                case CHANGE_USER_PERMISSION:
+                    mChatSessionMap.get(chatSessionId).updateUserPermission(message);
+                    break;
+                case CREATE_NEW_CHAT_SESSION:
+                    Integer creatorId = chatMessageJsonDecoder.getUserId(message);
+                    createNewChatSession(creatorId, session);
+                    break;
+                case DELETE_CHAT_SESSION:
+                    mChatSessionMap.get(chatSessionId).deleteChatSession(message, session);
+                    mChatSessionMap.remove(chatSessionId);
+                    break;
+                case INFO:
 //                System.out.println("INFO: " + getInfoMessage(message));
-                break;
-            case ERROR:
+                    break;
+                case ERROR:
 //                System.err.println("ERROR: " + getErrorMessage(message));
-                break;
-            case CLOSE_PREVIOUS_CHAT_SESSION:
-                mChatSessionMap.get(chatSessionId).removeSession(session);
-                break;
-            case NO_ACTION:
-                System.err.println("Message received but was given no action, or no action could be read.");
-                break;
-            case ACTION:
-                //Since no action was specified, maybe log the message?
-                break;
+                    break;
+                case CLOSE_PREVIOUS_CHAT_SESSION:
+                    mChatSessionMap.get(chatSessionId).removeSession(session);
+                    break;
+                case NO_ACTION:
+                    System.err.println("Message received but was given no action, or no action could be read.");
+                    break;
+                case ACTION:
+                    //Since no action was specified, maybe log the message?
+                    break;
 
-            default:
-                System.err.println("Unrecognised action string: " + action.getAttributeString());
-                break;
+                default:
+                    System.err.println("Unrecognised action string: " + action.toString());
+                    break;
+            }
         }
 
         return message;
@@ -98,20 +106,24 @@ public class UserChatEndpoint {
 
     @OnClose
     public void onClose(Session session) {
-        System.out.println("Socket Close");
-
         if (session != null) {
+
+            System.out.println("Socket Close: " + session.getId());
+
             try {
                 session.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            System.out.println("Socket Close: UNKNOWN SESSION");
         }
     }
 
     private void initChatSession(String message, Session session) {
-        Integer chatSessionId = WebSocketMessageUtils.getChatSessionId(message);
-        Integer userId = WebSocketMessageUtils.getUserId(message);
+        ChatMessageJsonDecoder chatMessageJsonDecoder = new ChatMessageJsonDecoder();
+        Integer chatSessionId = chatMessageJsonDecoder.getChatSessionId(message);
+        Integer userId = chatMessageJsonDecoder.getUserId(message);
 
         if (chatSessionId != null && userId != null) {
             if (
@@ -129,7 +141,8 @@ public class UserChatEndpoint {
     }
 
     private void closeSession(String message, Session session) {
-        Integer chatSessionId = WebSocketMessageUtils.getChatSessionId(message);
+        ChatMessageJsonDecoder chatMessageJsonDecoder = new ChatMessageJsonDecoder();
+        Integer chatSessionId = chatMessageJsonDecoder.getChatSessionId(message);
 
         if (chatSessionId != null) {
             if (mChatSessionMap.get(chatSessionId) != null) {

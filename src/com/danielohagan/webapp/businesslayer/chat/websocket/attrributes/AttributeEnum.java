@@ -16,7 +16,7 @@ public enum AttributeEnum implements IAttribute {
     CHAT_SESSION_NAME("chatSessionName"),
 
     USER_ID("userId"),
-    NEW_USER_ID("newUserId"),
+    TARGET_USER_ID("targetUserId"),
     USERNAME("userUsername"),
     STATUS("userStatus"),
     PERMISSION_LEVEL("permissionLevel");
@@ -28,7 +28,7 @@ public enum AttributeEnum implements IAttribute {
     }
 
     @Override
-    public String getAttributeString() {
+    public String toString() {
         return mAttributeString;
     }
 

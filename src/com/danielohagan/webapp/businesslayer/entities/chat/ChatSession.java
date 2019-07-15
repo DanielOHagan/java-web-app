@@ -3,6 +3,7 @@ package com.danielohagan.webapp.businesslayer.entities.chat;
 import com.danielohagan.webapp.businesslayer.entities.IEntity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatSession implements IEntity {
@@ -25,6 +26,7 @@ public class ChatSession implements IEntity {
         mName = name;
         mUserList = userList;
         mCreationTime = creationTime;
+        mMessageList = new ArrayList<>();
     }
 
     public ChatSession(
@@ -35,6 +37,8 @@ public class ChatSession implements IEntity {
         mId = id;
         mName = name;
         mCreationTime = creationTime;
+        mMessageList = new ArrayList<>();
+        mUserList = new ArrayList<>();
     }
 
     @Override

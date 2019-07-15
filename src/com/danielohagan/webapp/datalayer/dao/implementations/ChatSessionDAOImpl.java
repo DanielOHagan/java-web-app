@@ -19,7 +19,6 @@ import java.util.Map;
 
 public class ChatSessionDAOImpl implements IChatSessionDAO {
 
-    //TODO:: Environment variables
     public static final String CHAT_SESSION_TABLE_NAME = "chat_session_table";
     public static final String CHAT_SESSION_ID_COLUMN_NAME = "session_id";
     public static final String CHAT_SESSION_NAME_COLUMN_NAME = "session_name";
@@ -439,7 +438,7 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                         UserDAOImpl.USERNAME_COLUMN_NAME + ", " +
                         UserDAOImpl.STATUS_COLUMN_NAME + ", " +
                         UserDAOImpl.CREATION_TIME_COLUMN_NAME + ", " +
-                        LINK_CHAT_SESSION_ID_COLUMN_NAME + ", " +
+                        LINK_CHAT_SESSION_ID_COLUMN_NAME  +
                 " FROM " +
                         LINK_TABLE_NAME +
                 " INNER JOIN " +
@@ -460,7 +459,7 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             preparedStatement.setInt(1, sessionId);
             preparedStatement.setString(
                     2,
-                    chatPermissionLevel.getDatabaseEnumStringValue()
+                    chatPermissionLevel.toString()
             );
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -723,7 +722,7 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
     private ChatPermissionLevel parsePermissionLevelFromString(String stringValue) {
         if (stringValue != null && !stringValue.isEmpty()) {
             for (ChatPermissionLevel permissionLevel : ChatPermissionLevel.values()) {
-                if (permissionLevel.getDatabaseEnumStringValue().equals(stringValue)) {
+                if (permissionLevel.toString().equals(stringValue)) {
                     return permissionLevel;
                 }
             }
@@ -755,7 +754,7 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             preparedStatement.setInt(2, userId);
             preparedStatement.setString(
                     3,
-                    permissionLevel.getDatabaseEnumStringValue()
+                    permissionLevel.toString()
             );
 
             preparedStatement.execute();

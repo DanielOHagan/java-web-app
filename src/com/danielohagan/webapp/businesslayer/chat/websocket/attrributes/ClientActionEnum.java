@@ -11,12 +11,14 @@ public enum ClientActionEnum implements IAttribute {
     DISPLAY_USER("clientDisplayUser"),
     REMOVE_USER("clientRemoveUser"),
 
+    UPDATE_USER_PERMISSION("updateUserPermission"),
+
     REMOVE_CHAT_SESSION("clientRemoveChatSession"),
-    DISPLAY_CHAT_SESSION("clientAddChatSession"),
-
+    ADD_CHAT_SESSION("clientAddChatSession"),
+    DISPLAY_CHAT_SESSION("clientDisplayChatSession"),
     DISPLAY_CHAT_SESSION_NAME("clientDisplaySessionName"),
+    UPDATE_CHAT_SESSION_NAME("clientUpdateSessionName");
 
-    UPDATE_USER_PERMISSION("updateUserPermission");
 
     private String mActionString;
 
@@ -25,7 +27,7 @@ public enum ClientActionEnum implements IAttribute {
     }
 
     @Override
-    public String getAttributeString() {
+    public String toString() {
         return mActionString;
     }
 }

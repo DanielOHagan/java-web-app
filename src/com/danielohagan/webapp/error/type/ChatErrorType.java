@@ -53,7 +53,8 @@ public enum ChatErrorType implements IErrorType {
     ),
     USER_ID_NOT_FOUND("Unable to retrieve User ID", false, ErrorSeverity.MAJOR),
     CHAT_SESSION_ID_NOT_FOUND("Unable to retrieve Chat Session ID", false, ErrorSeverity.MAJOR),
-    NEW_USER_ID_NOT_FOUND("Unable to retrieve New User ID", false, ErrorSeverity.MAJOR);
+    NEW_USER_ID_NOT_FOUND("Unable to retrieve New User ID", false, ErrorSeverity.MAJOR),
+    NEW_USER_ALREADY_IN_SESSION("New User is already in Chat Session", false, ErrorSeverity.MINOR);
 
     private String mErrorMessage;
     private boolean mHideFromUser;

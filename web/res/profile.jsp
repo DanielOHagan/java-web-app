@@ -14,6 +14,7 @@
                         Username: ${profileUser.username}
                     </h1>
                 </header>
+                <h2>ID: ${profileUser.id}</h2>
                 <h2>Creation Time: ${profileUser.creationTime}</h2>
                 <h2>Email: ${profileUser.email}</h2>
                 <h2>User Status: ${profileUser.userStatus}</h2>

@@ -16,8 +16,6 @@ import java.util.Map;
 
 public class MessageDAOImpl implements IMessageDAO {
 
-    //TODO: Environment Variables
-
     public static final String MESSAGE_TABLE_NAME = "message_table";
     public static final String ID_COLUMN_NAME = "message_id";
     public static final String SENDER_ID_COLUMN_NAME = "message_sender_id";
