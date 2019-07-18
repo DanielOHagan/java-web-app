@@ -21,7 +21,7 @@
             <input type="password" name="oldPassword" id="oldPassword" width="32" />
             <br />
             <br />
-            <button type="submit" form="changePasswordForm" value="changePassword">CHANGE PASSWORD</button>
+            <button class="selectable" type="submit" form="changePasswordForm" value="changePassword">CHANGE PASSWORD</button>
         </form>
         <br />
         <br />
@@ -30,7 +30,7 @@
             <input type="password" name="deleteAccountPassword" id="deleteAccountPassword" width="32" />
             <br />
             <br />
-            <button type="submit" form="deleteAccountForm" value="deleteAccount">DELETE ACCOUNT</button>
+            <button class="selectable" type="submit" form="deleteAccountForm" value="deleteAccount">DELETE ACCOUNT</button>
         </form>
 
         <c:if test="${requestScope.hasInfo.equals(\"true\")}">

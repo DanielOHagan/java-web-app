@@ -143,7 +143,6 @@ function changeChatSession(client, chatSessionId) {
 
         //Load data from new chat session
         client.openChatSession();
-
     }
 }
 
@@ -337,7 +336,7 @@ function addNewUser() {
         var id = parseInt(targetUserId);
 
         if (!id.isNaN()) {
-            addUserToSession(userId, parseInt(targetUserId));
+            addUserToSession(userId, id);
         } else {
             console.error("Failed to parse number from New User ID input");
         }
@@ -445,10 +444,6 @@ function leaveChatSession(userId, chatSessionId) {
     if (confirm("Are you sure you want to leave the Chat Session?")) {
 
     }
-}
-
-function kickUserFromChatSession(userId, targetUserId, chatSessionId) {
-
 }
 
 function deleteChatSession(chatSessionId) {

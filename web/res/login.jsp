@@ -14,7 +14,7 @@
             <label for="loginFormPassword">Password:</label>
             <input type="password" name="loginFormPassword" id="loginFormPassword" width="32">
 
-            <button type="submit" form="loginForm" value="login">LOGIN</button>
+            <button class="selectable" type="submit" form="loginForm" value="login">LOGIN</button>
         </form>
 
         <c:if test="${requestScope.hasInfo.equals(\"true\")}">

@@ -28,7 +28,7 @@
                 </c:forEach>
             </ul>
             <div>
-                <button onclick="createNewChatSession()">CREATE NEW CHAT SESSION</button>
+                <button class="selectable" onclick="createNewChatSession()">CREATE NEW CHAT SESSION</button>
             </div>
         </div>
         <br />
@@ -41,7 +41,7 @@
         <div>
             <label for="chatDialogueBoxMessageInput">Message: </label>
             <input id="chatDialogueBoxMessageInput" placeholder="Input Message Here" width="32"/>
-            <button onclick="sendMessage()">SEND</button>
+            <button class="selectable" onclick="sendMessage()">SEND</button>
         </div>
         <c:if test="${requestScope.hasInfo.equals(\"true\")}">
             <h3>INFO</h3>
@@ -80,7 +80,7 @@
             </div>
             <br />
             <div>
-                <button onclick="addNewUser()">ADD NEW USER</button>
+                <button class="selectable" onclick="addNewUser()">ADD NEW USER</button>
             </div>
         </div>
     </main>

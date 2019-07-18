@@ -27,7 +27,7 @@
             <input type="password" name="registerFormPasswordConfirm" id="registerFormPasswordConfirm" width="32" />
 
             <br />
-            <button type="submit" form="registerForm" value="register">REGISTER</button>
+            <button class="selectable" type="submit" form="registerForm" value="register">REGISTER</button>
         </form>
 
         <c:if test="${requestScope.hasInfo.equals(\"true\")}">
