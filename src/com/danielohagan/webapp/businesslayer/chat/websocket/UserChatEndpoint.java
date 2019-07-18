@@ -47,6 +47,10 @@ public class UserChatEndpoint {
                 case CLOSE:
                     closeSession(message, session);
                     break;
+                case HEART_BEAT:
+                    //Heart beat action to keep connection alive
+                    break;
+
                 case ADD_MESSAGE:
                     mChatSessionMap.get(chatSessionId).addNewMessage(message);
                     break;
@@ -75,12 +79,14 @@ public class UserChatEndpoint {
 
                     mChatSessionMap.remove(chatSessionId);
                     break;
+
                 case INFO:
 //                System.out.println("INFO: " + getInfoMessage(message));
                     break;
                 case ERROR:
 //                System.err.println("ERROR: " + getErrorMessage(message));
                     break;
+
                 case CLOSE_PREVIOUS_CHAT_SESSION:
                     mChatSessionMap.get(chatSessionId).removeSession(session);
                     break;

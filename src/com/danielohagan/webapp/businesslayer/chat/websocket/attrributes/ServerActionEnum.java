@@ -24,6 +24,7 @@ public enum ServerActionEnum implements IAttribute {
     INIT("init"),
     CLOSE("close"),
     CLOSE_PREVIOUS_CHAT_SESSION("closePreviousChat"),
+    HEART_BEAT("heartBeat"),
 
     NO_ACTION("noAction"),
     ACTION("action");

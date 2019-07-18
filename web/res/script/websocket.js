@@ -56,6 +56,9 @@ class WebSocketClient {
                 console.error("onError:" + JSON.stringify(event, null, 4));
             };
 
+            //Send a "hearbeat" every 55 seconds to keep connection alive
+            setInterval(this.sendHeartBeat, 55000);
+
         } catch (e) {
             console.error(e);
         }
@@ -125,6 +128,18 @@ class WebSocketClient {
         };
 
         client.send(JSON.stringify(closePreviousAction));
+    }
+
+    sendHeartBeat() {
+        if (client.isOpen()) {
+            var heartBeat = {
+                action: "heartBeat",
+                userId: userId,
+                chatSessionId: this.chatSessionId
+            };
+
+            client.send(JSON.stringify(heartBeat));
+        }
     }
 }
 
@@ -335,7 +350,7 @@ function addNewUser() {
 
         var id = parseInt(targetUserId);
 
-        if (!id.isNaN()) {
+        if (!isNaN(id)) {
             addUserToSession(userId, id);
         } else {
             console.error("Failed to parse number from New User ID input");
@@ -472,6 +487,5 @@ document.onclose = function() {
         client.disconnect();
     }
 };
-
 
 client.connect();
