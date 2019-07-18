@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="Serverless Web App:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>Serverless Web App</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="Java Web App.war">
+      <element id="artifact" artifact-name="Serverless Web App:war exploded" />
+    </root>
+  </artifact>
+</component>

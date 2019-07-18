@@ -11,7 +11,7 @@
                 const userId = ${sessionScope.get("currentUser").id};
             </script>
         </c:if>
-        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/stylesheets/style.css"/>
+        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/res/stylesheets/style.css"/>
         <script src="${pageContext.request.contextPath}/res/script/websocket.js"></script>
     </head>
     <body>
