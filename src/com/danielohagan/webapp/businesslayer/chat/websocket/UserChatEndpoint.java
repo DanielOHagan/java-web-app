@@ -70,7 +70,9 @@ public class UserChatEndpoint {
                     createNewChatSession(creatorId, session);
                     break;
                 case DELETE_CHAT_SESSION:
-                    mChatSessionMap.get(chatSessionId).deleteChatSession(message, session);
+                    mChatSessionMap.get(chatSessionId)
+                            .deleteChatSession(message, session);
+
                     mChatSessionMap.remove(chatSessionId);
                     break;
                 case INFO:

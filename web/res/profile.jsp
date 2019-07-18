@@ -3,6 +3,8 @@
 <jsp:useBean id="profileUser" scope="request" type="com.danielohagan.webapp.businesslayer.entities.account.User"/>
 <html>
     <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewpoint" content="width=device-width, initial-scale=1">
         <title>${profileUser.username} | PROFILE </title>
     </head>
     <body>

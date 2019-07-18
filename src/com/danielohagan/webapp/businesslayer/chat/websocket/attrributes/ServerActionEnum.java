@@ -61,8 +61,7 @@ public enum ServerActionEnum implements IAttribute {
                     ServerActionEnum.DELETE_MESSAGE,
                     Arrays.asList(
                             ChatPermissionLevel.CREATOR,
-                            ChatPermissionLevel.ADMIN,
-                            ChatPermissionLevel.MEMBER
+                            ChatPermissionLevel.ADMIN
                     )
             );
 
@@ -84,6 +83,23 @@ public enum ServerActionEnum implements IAttribute {
 
             mActionPermissionLevelMap.put(
                     ServerActionEnum.CHANGE_USER_PERMISSION,
+                    Arrays.asList(
+                            ChatPermissionLevel.CREATOR,
+                            ChatPermissionLevel.ADMIN
+                    )
+            );
+
+            mActionPermissionLevelMap.put(
+                    ServerActionEnum.ADD_USER,
+                    Arrays.asList(
+                            ChatPermissionLevel.CREATOR,
+                            ChatPermissionLevel.ADMIN,
+                            ChatPermissionLevel.MEMBER
+                    )
+            );
+
+            mActionPermissionLevelMap.put(
+                    ServerActionEnum.REMOVE_USER,
                     Arrays.asList(
                             ChatPermissionLevel.CREATOR,
                             ChatPermissionLevel.ADMIN

@@ -87,7 +87,7 @@ public class ChatMessageJsonDecoder {
         try (JsonReader reader = Json.createReader(new StringReader(message))) {
             JsonObject jsonObject = reader.readObject();
 
-            messageId = jsonObject.getInt(AttributeEnum.ID.toString());
+            messageId = jsonObject.getInt(AttributeEnum.MESSAGE_ID.toString());
         }
 
         return messageId;

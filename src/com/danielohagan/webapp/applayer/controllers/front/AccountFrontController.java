@@ -18,7 +18,7 @@ public class AccountFrontController extends HttpServlet {
             HttpServletRequest request,
             HttpServletResponse response
     ) throws ServletException, IOException {
-        //TODO:: Filters and whatnot
+
 
         new AccountApplicationController(request, response).processPost();
     }
@@ -27,8 +27,7 @@ public class AccountFrontController extends HttpServlet {
             HttpServletRequest request,
             HttpServletResponse response
     ) throws ServletException, IOException {
-
-        //TODO:: Filters and whatnot
+        
 
         new AccountApplicationController(request, response).processGet();
     }

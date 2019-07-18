@@ -83,23 +83,4 @@ public class AccountChangePasswordCommand extends AbstractCommand {
             );
         }
     }
-
-//    TODO:: Remove this
-//    private void forwardWithError(
-//            HttpServletRequest request,
-//            HttpServletResponse response,
-//            IErrorType errorType,
-//            String requestDispatcher
-//    ) {
-//        setRequestError(request, errorType);
-//
-//        try {
-//            request.getRequestDispatcher(requestDispatcher)
-//                    .forward(request, response);
-//        } catch (ServletException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 }

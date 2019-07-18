@@ -1,8 +1,9 @@
 package com.danielohagan.webapp.businesslayer.chat.websocket;
 
 import com.danielohagan.webapp.businesslayer.chat.websocket.attrributes.AttributeEnum;
-import com.danielohagan.webapp.businesslayer.chat.websocket.json.ChatMessageJsonEncoder;
+import com.danielohagan.webapp.businesslayer.chat.websocket.attrributes.ServerActionEnum;
 import com.danielohagan.webapp.businesslayer.chat.websocket.json.ChatMessageJsonDecoder;
+import com.danielohagan.webapp.businesslayer.chat.websocket.json.ChatMessageJsonEncoder;
 import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
 import com.danielohagan.webapp.businesslayer.entities.chat.ChatSessionUser;
 import com.danielohagan.webapp.businesslayer.entities.chat.Message;
@@ -10,7 +11,6 @@ import com.danielohagan.webapp.datalayer.dao.databaseenums.ChatPermissionLevel;
 import com.danielohagan.webapp.datalayer.dao.implementations.ChatSessionDAOImpl;
 import com.danielohagan.webapp.datalayer.dao.implementations.MessageDAOImpl;
 import com.danielohagan.webapp.datalayer.dao.implementations.UserDAOImpl;
-import com.danielohagan.webapp.error.ErrorSeverity;
 import com.danielohagan.webapp.error.response.ErrorResponse;
 import com.danielohagan.webapp.error.type.ChatErrorType;
 import com.danielohagan.webapp.error.type.IErrorType;
@@ -39,6 +39,7 @@ public class ChatSessionHandler {
     private List<Session> mSessionList; //List of the WebSocket Clients
     private ChatSessionDAOImpl mChatSessionDAO;
     private MessageDAOImpl mMessageDAO;
+    private UserDAOImpl mUserDAO;
     private ChatMessageJsonEncoder mChatMessageJsonEncoder;
     private ChatMessageJsonDecoder mChatMessageJsonDecoder;
 
@@ -46,6 +47,7 @@ public class ChatSessionHandler {
         CHAT_SESSION_ID = chatSessionId;
         mChatSessionDAO = new ChatSessionDAOImpl();
         mMessageDAO = new MessageDAOImpl();
+        mUserDAO = new UserDAOImpl();
         mSessionList = new ArrayList<>();
         mChatMessageJsonEncoder = new ChatMessageJsonEncoder();
         mChatMessageJsonDecoder = new ChatMessageJsonDecoder();
@@ -66,6 +68,7 @@ public class ChatSessionHandler {
         CHAT_SESSION_ID = chatSession.getId();
         mChatSessionDAO = new ChatSessionDAOImpl();
         mMessageDAO = new MessageDAOImpl();
+        mUserDAO = new UserDAOImpl();
         mSessionList = new ArrayList<>();
         mChatMessageJsonEncoder = new ChatMessageJsonEncoder();
 
@@ -93,40 +96,55 @@ public class ChatSessionHandler {
 
     public void addUser(String message) {
         Integer userId = mChatMessageJsonDecoder.getUserId(message);
-        Integer sessionId = mChatMessageJsonDecoder.getChatSessionId(message);
         Integer newUserId = mChatMessageJsonDecoder.getTargetUserId(message);
 
-        //TODO:: This
+        ErrorResponse errorResponse = addUserGetErrors(userId, newUserId);
 
-        ErrorResponse errorResponse = addUserGetErrors(userId, sessionId, newUserId);
-
-        if (errorResponse.highestSeverity() == ErrorSeverity.INFO) {
+        if (!errorResponse.hasError()) {
             mChatSessionDAO.addUserToSession(
-                    sessionId,
+                    CHAT_SESSION_ID,
                     newUserId,
                     ChatPermissionLevel.MEMBER
             );
 
             ChatSessionUser chatSessionUser = new ChatSessionUser(
                     new UserDAOImpl().getById(newUserId),
-                    sessionId,
+                    CHAT_SESSION_ID,
                     ChatPermissionLevel.MEMBER
             );
 
-            sendToAllSessions(mChatMessageJsonEncoder.generateDisplayUserJson(chatSessionUser));
+            sendToAllSessions(
+                    mChatMessageJsonEncoder.generateDisplayUserJson(chatSessionUser)
+            );
+        } else {
+            //Send Error response
         }
     }
 
     public void removeUser(String message) {
         Integer userId = mChatMessageJsonDecoder.getUserId(message);
-        Integer sessionId = mChatMessageJsonDecoder.getChatSessionId(message);
         Integer targetUserId = mChatMessageJsonDecoder.getTargetUserId(message);
 
+        ErrorResponse errorResponse = removeUserGetErrors(userId, targetUserId);
 
+        if (!errorResponse.hasError()) {
+            //Remove Link from Database
+            mChatSessionDAO.removeUserFromSession(CHAT_SESSION_ID, targetUserId);
+
+            //Send remove message to session
+            sendToAllSessions(
+                    mChatMessageJsonEncoder.generateRemoveUserFromSession(
+                            CHAT_SESSION_ID,
+                            targetUserId
+                    )
+            );
+        } else {
+            //Send Error response
+        }
     }
 
     public void updateUserPermission(String message) {
-
+        //TODO:: This
     }
 
     /**
@@ -196,7 +214,7 @@ public class ChatSessionHandler {
     }
 
     public void addNewMessage(String jsonMessage) {
-        Message message;
+        //TODO:: Re-write this method AND ADD ERROR CHECKS
 
         //JSON Message Validation
         if (isValidJsonMessage(jsonMessage)) {
@@ -214,7 +232,7 @@ public class ChatSessionHandler {
             }
 
             if (body != null && userId != null) {
-                message = new Message();
+                Message message = new Message();
 
                 int id = Random.generateRandomPositiveInt();
 
@@ -227,11 +245,6 @@ public class ChatSessionHandler {
                 message.setChatSessionId(CHAT_SESSION_ID);
                 message.setId(id);
                 message.setCreationTime(LocalDateTime.now());
-
-                //TODO: Validation checks
-                //    With error handling
-                //Message Entity validation
-
 
                 //Store in database
                 mMessageDAO.createNewMessage(message);
@@ -249,37 +262,41 @@ public class ChatSessionHandler {
     }
 
     public void deleteMessage(String message) {
-        //Check User has permission
-
-        //TODO:: Remove from database
-
-        //TODO:: Remove from mMessageList
-
-        //Send remove message to clients
-    }
-
-    public void deleteChatSession(String message, Session session) {
-        Integer sessionId = mChatMessageJsonDecoder.getChatSessionId(message);
         Integer userId = mChatMessageJsonDecoder.getUserId(message);
+        Integer messageId = mChatMessageJsonDecoder.getMessageId(message);
 
-        if (
-                sessionId != null &&
-                userId != null &&
-                mChatSessionDAO.getUserPermissionLevel(sessionId, userId)
-                        == ChatPermissionLevel.CREATOR
-        ) {
-            mChatSessionDAO.deleteSession(sessionId);
-            sendDeleteChatSession(sessionId);
-            cleanUp();
+        ErrorResponse errorResponse = deleteMessageGetErrors(userId, messageId);
+
+        if (!errorResponse.hasError()) {
+            mMessageDAO.deleteMessage(messageId);
+
+            mChatSession.removeMessageById(messageId);
+
+            //Send remove message to clients
+            sendToAllSessions(mChatMessageJsonEncoder.generateDeleteMessage(messageId));
         } else {
-            sendError(
-                    session,
-                    ChatErrorType.PERMISSION_CHECK_FAILED_SESSION_DELETION
-            );
+            //Send Error response
         }
     }
 
-    private void sendDeleteChatSession(Integer sessionId) {
+    public void deleteChatSession(String message, Session session) {
+        Integer userId = mChatMessageJsonDecoder.getUserId(message);
+
+        ErrorResponse errorResponse = deleteChatSessionGetErrors(userId);
+        if (!errorResponse.hasError()) {
+            //Remove from DB
+            mChatSessionDAO.deleteSession(CHAT_SESSION_ID);
+
+            //Tell clients to remove from display
+            sendDeleteChatSession();
+
+            cleanUp();
+        } else {
+            //Send Error response
+        }
+    }
+
+    private void sendDeleteChatSession() {
         //Tell Sessions to remove chat Session
 
         //TODO::
@@ -301,17 +318,17 @@ public class ChatSessionHandler {
     }
 
     public void editMessage(String message, Session session) {
+        //TODO:: Re-write this method
         Integer messageId = mChatMessageJsonDecoder.getMessageId(message);
         Integer userId = mChatMessageJsonDecoder.getUserId(message);
-        Integer chatSessionId = mChatMessageJsonDecoder.getChatSessionId(message);
         String newMessageBody = null;
         ChatPermissionLevel permissionLevel;
 
         //TODO: This
 
-        if (messageId != null && userId != null && chatSessionId != null) {
+        if (messageId != null && userId != null) {
             permissionLevel =
-                    mChatSessionDAO.getUserPermissionLevel(chatSessionId, userId);
+                    mChatSessionDAO.getUserPermissionLevel(CHAT_SESSION_ID, userId);
 
             //Check User has permission
             if (
@@ -337,6 +354,8 @@ public class ChatSessionHandler {
         }
     }
 
+    //Remove this method when re-writing addNewMessage method
+    @Deprecated
     private boolean isValidJsonMessage(String jsonMessage) {
         //TODO:: Add to this
 
@@ -384,7 +403,12 @@ public class ChatSessionHandler {
     }
 
     private void sendDisplayUpdateMessageBody(int messageId, String messageBody) {
-        //TODO:: This
+//        sendToAllSessions(
+//                mChatMessageJsonEncoder.generateDisplayUpdateMessageJson(
+//                        messageId,
+//                        messageBody
+//                )
+//        );
     }
 
     private void sendDisplayMessagesToSession(
@@ -413,32 +437,197 @@ public class ChatSessionHandler {
 
     private ErrorResponse addUserGetErrors(
             Integer userId,
-            Integer sessionId,
             Integer newUserId
     ) {
         ErrorResponse errorResponse = new ErrorResponse();
 
-        if (userId == null || sessionId == null || newUserId == null) {
+        if (userId == null || newUserId == null) {
             errorResponse.add(ChatErrorType.UNABLE_TO_RETRIEVE_REQUIRED_ID);
         } else {
-            //If User is in Chat Session
-            if (!mChatSessionDAO.userIsInChatSession(userId, sessionId)) {
-                errorResponse.add(ChatErrorType.ACCOUNT_DOES_NOT_HAVE_ACCESS_TO_SESSION);
+            //If Chat Session exists
+            if (!mChatSessionDAO.exists(CHAT_SESSION_ID)) {
+                errorResponse.add(ChatErrorType.SESSION_DOES_NOT_EXIST);
+            } else {
+                //If User exists
+                if (!mUserDAO.exists(userId)) {
+                    errorResponse.add(ChatErrorType.USER_ID_NOT_FOUND);
+                }
+
+                //If New User exists
+                if (!mUserDAO.exists(newUserId)) {
+                    errorResponse.add(ChatErrorType.NEW_USER_NOT_FOUND);
+                }
+
+                //If User is in Chat Session
+                if (!mChatSessionDAO.userIsInChatSession(userId, CHAT_SESSION_ID)) {
+                    errorResponse.add(ChatErrorType.ACCOUNT_DOES_NOT_HAVE_ACCESS_TO_SESSION);
+                }
+
+                //If New User is in Chat Session
+                if (mChatSessionDAO.userIsInChatSession(newUserId, CHAT_SESSION_ID)) {
+                    errorResponse.add(ChatErrorType.NEW_USER_ALREADY_IN_SESSION);
+                }
+
+                //If has permission
+                ChatPermissionLevel permissionLevel =
+                        mChatSessionDAO.getUserPermissionLevel(CHAT_SESSION_ID, userId);
+
+                if (!ServerActionEnum.PermissionLists.hasPermission(
+                        ServerActionEnum.ADD_USER,
+                        permissionLevel
+                )) {
+                    errorResponse.add(ChatErrorType.PERMISSION_CHECK_FAILED_ADD_USER);
+                }
+            }
+        }
+
+        return errorResponse;
+    }
+
+    private ErrorResponse removeUserGetErrors(
+            Integer userId,
+            Integer targetUserId
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse();
+
+        if (userId == null ||  targetUserId == null) {
+            errorResponse.add(ChatErrorType.UNABLE_TO_RETRIEVE_REQUIRED_ID);
+        } else {
+            //If User exists
+            if (!mUserDAO.exists(userId)) {
+                errorResponse.add(ChatErrorType.USER_ID_NOT_FOUND);
+            } else {
+
+                //If Target User exists
+                if (!mUserDAO.exists(targetUserId)) {
+                    errorResponse.add(ChatErrorType.USER_ID_NOT_FOUND);
+                }
+
+                //If User is in Chat Session
+                if (!mChatSessionDAO.userIsInChatSession(userId, CHAT_SESSION_ID)) {
+                    errorResponse.add(ChatErrorType.ACCOUNT_DOES_NOT_HAVE_ACCESS_TO_SESSION);
+                }
+
+                //If Target User is not in Chat Session
+                if (!mChatSessionDAO.userIsInChatSession(targetUserId, CHAT_SESSION_ID)) {
+                    errorResponse.add(ChatErrorType.USER_NOT_IN_SESSION);
+                }
+
+                //If User has permission
+                ChatPermissionLevel permissionLevel =
+                        mChatSessionDAO.getUserPermissionLevel(CHAT_SESSION_ID, userId);
+
+                if (
+                    //If User is removing oneself
+                    !userId.equals(targetUserId) &&
+
+                    //If User has Remove User permission
+                    !ServerActionEnum.PermissionLists.hasPermission(
+                            ServerActionEnum.REMOVE_USER, permissionLevel
+                    )
+                ) {
+                    errorResponse.add(ChatErrorType.PERMISSION_CHECK_FAILED_REMOVE_USER);
+                }
+
+                permissionLevel = mChatSessionDAO.getUserPermissionLevel(CHAT_SESSION_ID, targetUserId);
+                if (
+                    //If target user can be removed
+                        permissionLevel == ChatPermissionLevel.CREATOR
+                ) {
+                    errorResponse.add(ChatErrorType.CANT_REMOVE_CREATOR);
+                }
+            }
+        }
+
+        return errorResponse;
+    }
+
+    private ErrorResponse addNewMessageGetErrors(
+            Integer userId,
+            String body
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse();
+
+        if (userId == null || body == null) {
+            errorResponse.add(ChatErrorType.UNABLE_TO_RETRIEVE_REQUIRED_ID);
+        } else {
+            //If User exists
+            if (!mUserDAO.exists(userId)) {
+                errorResponse.add(ChatErrorType.USER_ID_NOT_FOUND);
+            } else {
+                //If Chat Session exists
+                if (!mChatSessionDAO.exists(CHAT_SESSION_ID)) {
+                    errorResponse.add(ChatErrorType.SESSION_DOES_NOT_EXIST);
+                } else {
+                    //If User is in Chat Session
+                    if (!mChatSessionDAO.userIsInChatSession(userId, CHAT_SESSION_ID)) {
+                        errorResponse.add(ChatErrorType.ACCOUNT_DOES_NOT_HAVE_ACCESS_TO_SESSION);
+                    }
+                }
+            }
+        }
+
+        return errorResponse;
+    }
+
+    private ErrorResponse deleteMessageGetErrors(
+            Integer userId,
+            Integer messageId
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse();
+
+        if (userId == null || messageId == null) {
+            errorResponse.add(ChatErrorType.UNABLE_TO_RETRIEVE_REQUIRED_ID);
+        } else {
+            //If User exists
+            if (!mUserDAO.exists(userId)) {
+                errorResponse.add(ChatErrorType.USER_ID_NOT_FOUND);
             }
 
-            //If New User is in Chat Session
-            if (mChatSessionDAO.userIsInChatSession(newUserId, sessionId)) {
-                errorResponse.add(ChatErrorType.NEW_USER_ALREADY_IN_SESSION);
+            //If User is in Chat Session
+            if (!mChatSessionDAO.userIsInChatSession(userId, CHAT_SESSION_ID)) {
+                errorResponse.add(ChatErrorType.ACCOUNT_DOES_NOT_HAVE_ACCESS_TO_SESSION);
+            } else {
+                //If Message exists
+                if (!mMessageDAO.exists(messageId)) {
+                    errorResponse.add(ChatErrorType.MESSAGE_DOES_NOT_EXIST);
+                } else {
+                    if (
+                        //If User is not message sender
+                        !userId.equals(mMessageDAO.getMessageSenderId(messageId)) &&
+
+                        //If User does not have permission
+                        !ServerActionEnum.PermissionLists.hasPermission(
+                                ServerActionEnum.DELETE_MESSAGE,
+                                mChatSessionDAO.getUserPermissionLevel(CHAT_SESSION_ID, userId)
+                        )
+                    ) {
+                        errorResponse.add(ChatErrorType.PERMISSION_CHECK_FAILED_DELETE_MESSAGE);
+                    }
+                }
+            }
+        }
+
+        return errorResponse;
+    }
+
+    private ErrorResponse deleteChatSessionGetErrors(Integer userId) {
+        ErrorResponse errorResponse = new ErrorResponse();
+
+        if (userId == null) {
+            errorResponse.add(ChatErrorType.UNABLE_TO_RETRIEVE_REQUIRED_ID);
+        } else {
+            //If User exists
+            if (!mUserDAO.exists(userId)) {
+                errorResponse.add(ChatErrorType.USER_ID_NOT_FOUND);
             }
 
             //If has permission
-            if (
-                    mChatSessionDAO.getUserPermissionLevel(sessionId, userId)
-                            == ChatPermissionLevel.ADMIN ||
-                    mChatSessionDAO.getUserPermissionLevel(sessionId, userId)
-                            == ChatPermissionLevel.CREATOR
-            ) {
-                errorResponse.add(ChatErrorType.PERMISSION_CHECK_FAILED_ADD_USER);
+            if (!ServerActionEnum.PermissionLists.hasPermission(
+                    ServerActionEnum.DELETE_CHAT_SESSION,
+                    mChatSessionDAO.getUserPermissionLevel(CHAT_SESSION_ID, userId)
+            )) {
+                errorResponse.add(ChatErrorType.PERMISSION_CHECK_FAILED_DELETE_CHAT_SESSION);
             }
         }
 
@@ -457,6 +646,10 @@ public class ChatSessionHandler {
 
         if (mChatSessionDAO != null) {
             mChatSessionDAO = null;
+        }
+
+        if (mChatSession != null) {
+            mChatSession.cleanUp();
         }
     }
 }

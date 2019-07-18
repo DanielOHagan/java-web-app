@@ -5,7 +5,7 @@ import com.danielohagan.webapp.error.ErrorSeverity;
 public enum ChatErrorType implements IErrorType {
 
     UNABLE_TO_RETRIEVE_REQUIRED_ID(
-            "Unable to retrieve the required IDs to perform task",
+            "Unable to retrieve the required ID(s) to perform task",
             false,
             ErrorSeverity.MAJOR
     ),
@@ -21,6 +21,7 @@ public enum ChatErrorType implements IErrorType {
             ErrorSeverity.MAJOR
     ),
     NO_SESSION_ID("A Chat Session has not been given", false, ErrorSeverity.INFO),
+    MESSAGE_DOES_NOT_EXIST("The selected message does not exist", false, ErrorSeverity.MAJOR),
     PERMISSION_CHECK_FAILED_SESSION_DELETION(
             "Your account does not have permission to delete the Chat Session",
             false,
@@ -33,6 +34,21 @@ public enum ChatErrorType implements IErrorType {
     ),
     PERMISSION_CHECK_FAILED_ADD_USER(
             "Your account does not have permission to add a new user",
+            false,
+            ErrorSeverity.MAJOR
+    ),
+    PERMISSION_CHECK_FAILED_REMOVE_USER(
+            "Your account does not have permission to remove a user",
+            false,
+            ErrorSeverity.MAJOR
+    ),
+    PERMISSION_CHECK_FAILED_DELETE_MESSAGE(
+            "Your account does not have permission to delete the selected message",
+            false,
+            ErrorSeverity.MAJOR
+    ),
+    PERMISSION_CHECK_FAILED_DELETE_CHAT_SESSION(
+            "Your account does not have permission to delete the Chat Session",
             false,
             ErrorSeverity.MAJOR
     ),
@@ -52,9 +68,11 @@ public enum ChatErrorType implements IErrorType {
             ErrorSeverity.MAJOR
     ),
     USER_ID_NOT_FOUND("Unable to retrieve User ID", false, ErrorSeverity.MAJOR),
+    USER_NOT_IN_SESSION("Target User ID is not in session", false, ErrorSeverity.MINOR),
     CHAT_SESSION_ID_NOT_FOUND("Unable to retrieve Chat Session ID", false, ErrorSeverity.MAJOR),
-    NEW_USER_ID_NOT_FOUND("Unable to retrieve New User ID", false, ErrorSeverity.MAJOR),
-    NEW_USER_ALREADY_IN_SESSION("New User is already in Chat Session", false, ErrorSeverity.MINOR);
+    NEW_USER_NOT_FOUND("Unable to find New User", false, ErrorSeverity.MAJOR),
+    NEW_USER_ALREADY_IN_SESSION("New User is already in Chat Session", false, ErrorSeverity.MINOR),
+    CANT_REMOVE_CREATOR("Can't remove the creator of the Chat Session", false, ErrorSeverity.MINOR);
 
     private String mErrorMessage;
     private boolean mHideFromUser;

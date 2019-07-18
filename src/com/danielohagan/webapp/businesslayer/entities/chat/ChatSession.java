@@ -46,6 +46,15 @@ public class ChatSession implements IEntity {
         return mId;
     }
 
+    public void removeMessageById(int id) {
+        for (int i = 0; i < mMessageList.size(); i++) {
+            if (mMessageList.get(i).getId() == id) {
+                mMessageList.remove(i);
+                break;
+            }
+        }
+    }
+
     public List<Message> getMessageList() {
         return mMessageList;
     }
@@ -80,5 +89,15 @@ public class ChatSession implements IEntity {
         }
 
         return null;
+    }
+
+    public void cleanUp() {
+        if (mUserList != null) {
+            mUserList.clear();
+        }
+
+        if (mMessageList != null) {
+            mMessageList.clear();
+        }
     }
 }

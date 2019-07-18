@@ -125,8 +125,7 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
     @Override
     public void removeUserFromSession(int sessionId, int userId) {
         String sqlStatement =
-                "DELETE *" +
-                " FROM " +
+                "DELETE FROM " +
                         LINK_TABLE_NAME +
                 " WHERE " +
                         LINK_CHAT_SESSION_ID_COLUMN_NAME + " = ?" +
@@ -770,8 +769,7 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
             int conditionValue
     ) {
         String sqlStatement =
-                "DELETE *" +
-                " FROM " +
+                "DELETE FROM " +
                         tableName +
                 " WHERE " +
                         conditionColumnName + " = ?;";

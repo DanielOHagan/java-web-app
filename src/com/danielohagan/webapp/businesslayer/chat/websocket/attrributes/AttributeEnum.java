@@ -9,6 +9,7 @@ public enum AttributeEnum implements IAttribute {
     CREATION_TIME("creationTime"),
 
     MESSAGE_LIST("messageList"),
+    MESSAGE_ID("messageId"),
     MESSAGE("message"),
 
     SENDER_USERNAME("senderUsername"),

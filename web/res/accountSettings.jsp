@@ -3,6 +3,8 @@
 <jsp:useBean id="currentUser" scope="session" class="com.danielohagan.webapp.businesslayer.entities.account.User" />
 <html>
 <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewpoint" content="width=device-width, initial-scale=1">
     <title>${currentUser.username} | SETTINGS</title>
 </head>
     <body>

@@ -181,6 +181,11 @@ public class MessageDAOImpl implements IMessageDAO {
         deleteColumnRowsById(CHAT_SESSION_ID_COLUMN_NAME, sessionId);
     }
 
+    @Override
+    public Integer getMessageSenderId(int messageId) {
+        return getColumnInteger(messageId, SENDER_ID_COLUMN_NAME);
+    }
+
     /**
      * Delete every message sent by a User
      *
@@ -471,9 +476,9 @@ public class MessageDAOImpl implements IMessageDAO {
         String sqlStatement =
                 "SELECT " +
                         columnName +
-                        " FROM " +
+                " FROM " +
                         MESSAGE_TABLE_NAME +
-                        " WHERE " +
+                " WHERE " +
                         ID_COLUMN_NAME + " = ?;";
 
         try (Connection connection = DataSource.getConnection()) {
@@ -482,7 +487,10 @@ public class MessageDAOImpl implements IMessageDAO {
             preparedStatement.setInt(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            result = resultSet.getInt(columnName);
+
+            while (resultSet.next()) {
+                result = resultSet.getInt(columnName);
+            }
 
             preparedStatement.close();
             resultSet.close();
@@ -535,8 +543,7 @@ public class MessageDAOImpl implements IMessageDAO {
 
     private void deleteColumnRowsById(String column, int id) {
         String sqlStatement =
-                "DELETE *" +
-                " FROM " +
+                "DELETE FROM " +
                         MESSAGE_TABLE_NAME +
                 " WHERE " +
                         column + " = ?;";

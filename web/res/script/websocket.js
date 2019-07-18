@@ -151,7 +151,7 @@ function displayNewMessage(message) {
     var node = document.getElementById("chatMessageContainer");
 
     var messageWrapperTag = document.createElement("div");
-    messageWrapperTag.setAttribute("id", MESSAGE_PREFIX + message.id);
+    messageWrapperTag.setAttribute("id", MESSAGE_PREFIX + message.messageId);
 
     var messageBodyTag = document.createElement("p");
     messageBodyTag.innerHTML = message.senderUsername + ": " + message.body;
@@ -166,9 +166,9 @@ function displayOldMessage(message) {
 }
 
 function removeMessageFromDisplay(message) {
-    var messageNode = document.getElementById(MESSAGE_PREFIX + message.id);
+    var messageNode = document.getElementById(MESSAGE_PREFIX + message.messageId);
 
-    messageNode.delete();
+    messageNode.parentNode.removeChild(messageNode);
 }
 
 function displayUpdatedMessage(message) {
@@ -333,7 +333,14 @@ function addNewUser() {
     var targetUserId = prompt("Input new User ID", "-1");
 
     if (targetUserId !== "-1") {
-        addUserToSession(userId, parseInt(targetUserId));
+
+        var id = parseInt(targetUserId);
+
+        if (!id.isNaN()) {
+            addUserToSession(userId, parseInt(targetUserId));
+        } else {
+            console.error("Failed to parse number from New User ID input");
+        }
     }
 }
 
@@ -361,17 +368,21 @@ function displayChatUser(message) {
 
     if (!isCreator) {
         listItemNode = document.createElement("ul");
-        listItemNode.setAttribute("id", SESSION_USER_PREFIX + message.id);
+        listItemNode.setAttribute("id", SESSION_USER_PREFIX + message.userId);
         listItemNode.innerHTML = message.userUsername;
         memberListNode.appendChild(listItemNode);
     }
 }
 
 function removeUserFromDisplay(message) {
-    var listItemNode = document.getElementById(SESSION_USER_PREFIX + message.id);
+    if (client !== null && client.isOpen()) {
+        if (message.chatSessionId === client.chatSessionId) {
+            var listItemNode = document.getElementById(SESSION_USER_PREFIX + message.targetUserId);
 
-    if (listItemNode !== null) {
-        listItemNode.delete();
+            if (listItemNode !== null) {
+                listItemNode.parentNode.removeChild(listItemNode);
+            }
+        }
     }
 }
 
@@ -415,7 +426,7 @@ function removeChatSessionFromDisplay(message) {
     var chatSessionListItem = document.getElementById(SESSION_PREFIX + chatSessionId);
 
     if (chatSessionListItem !== null) {
-        chatSessionListItem.delete();
+        chatSessionListItem.parentNode.removeChild(chatSessionListItem);
     }
 }
 
@@ -460,18 +471,6 @@ var client = new WebSocketClient(
     8080,
     "/Serverless_Web_App_war_exploded/chat"
 );
-
-document.onload = function () {
-    //client.connect();
-
-    // if (client.webSocket === null || !client.webSocket.isOpen()) {
-    //     client.connect();
-    //
-    //     if (!client.isOpen()) {
-    //         alert("Failed to open WebSocket connection, please refresh.")
-    //     }
-    // }
-};
 
 document.onclose = function() {
     if (client !== null && client.isOpen()) {

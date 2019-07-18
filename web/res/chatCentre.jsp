@@ -2,6 +2,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
     <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewpoint" content="width=device-width, initial-scale=1">
         <title>CHAT</title>
         <c:if test="${sessionScope.loggedIn.equals(\"true\")}">
             <script>
@@ -9,6 +11,7 @@
                 const userId = ${sessionScope.get("currentUser").id};
             </script>
         </c:if>
+        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/stylesheets/style.css"/>
         <script src="${pageContext.request.contextPath}/res/script/websocket.js"></script>
     </head>
     <body>

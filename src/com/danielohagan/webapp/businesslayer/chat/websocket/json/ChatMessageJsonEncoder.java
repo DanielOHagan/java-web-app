@@ -45,10 +45,10 @@ public class ChatMessageJsonEncoder {
         return provider.createObjectBuilder()
                 .add(
                         ServerActionEnum.ACTION.toString(),
-                        ServerActionEnum.DELETE_MESSAGE.toString()
+                        ClientActionEnum.REMOVE_MESSAGE.toString()
                 )
                 .add(
-                        AttributeEnum.ID.toString(),
+                        AttributeEnum.MESSAGE_ID.toString(),
                         messageId
                 )
                 .build();
@@ -84,7 +84,7 @@ public class ChatMessageJsonEncoder {
                         user.getUsername()
                 )
                 .add(
-                        AttributeEnum.ID.toString(),
+                        AttributeEnum.USER_ID.toString(),
                         user.getId()
                 )
                 .add(
@@ -94,6 +94,28 @@ public class ChatMessageJsonEncoder {
                 .add(
                         AttributeEnum.PERMISSION_LEVEL.toString(),
                         user.getPermissionLevel().toString()
+                )
+                .build();
+    }
+
+    public JsonObject generateRemoveUserFromSession(
+            int sessionId,
+            int targetUserId
+    ) {
+        JsonProvider provider = JsonProvider.provider();
+
+        return provider.createObjectBuilder()
+                .add(
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.REMOVE_USER.toString()
+                )
+                .add(
+                        AttributeEnum.CHAT_SESSION_ID.toString(),
+                        sessionId
+                )
+                .add(
+                        AttributeEnum.TARGET_USER_ID.toString(),
+                        targetUserId
                 )
                 .build();
     }
@@ -137,7 +159,7 @@ public class ChatMessageJsonEncoder {
 
             messageJson = provider.createObjectBuilder()
                     .add(
-                            AttributeEnum.ID.toString(),
+                            AttributeEnum.MESSAGE_ID.toString(),
                             message.getId()
                     )
                     .add(

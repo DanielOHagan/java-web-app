@@ -17,6 +17,8 @@ public interface IMessageDAO extends IEntityDAO<Message> {
     void deleteSessionMessageByUser(int sessionId, int userId);
     void deleteMessageBySession(int sessionId);
 
+    Integer getMessageSenderId(int messageId);
+
     List<Message> getChatSessionMessageList(int sessionId);
     List<Message> getChatSessionMessageListByUser(int sessionId, int userId);
     List<Message> getChatSessionMessageListBeforeTime(int sessionId, LocalDateTime time);

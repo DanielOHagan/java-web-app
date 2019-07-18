@@ -1,9 +1,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
-<head>
-    <title>LOGIN</title>
-</head>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewpoint" content="width=device-width, initial-scale=1">
+        <title>LOGIN</title>
+    </head>
     <body>
         <jsp:include page="views/nav.jsp" />
         <form name="loginForm" id="loginForm" action="${pageContext.request.contextPath}/account/login" method="post">
