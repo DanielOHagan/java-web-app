@@ -13,6 +13,7 @@ public enum ClientActionEnum implements IAttribute {
 
     UPDATE_USER_PERMISSION("updateUserPermission"),
 
+    SET_CHAT_SESSION_ID("clientSetChatSessionId"),
     REMOVE_CHAT_SESSION("clientRemoveChatSession"),
     ADD_CHAT_SESSION("clientAddChatSession"),
     DISPLAY_CHAT_SESSION("clientDisplayChatSession"),

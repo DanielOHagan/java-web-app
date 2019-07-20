@@ -71,6 +71,25 @@ public class ChatMessageJsonEncoder {
                 .build();
     }
 
+    public JsonObject generateDisplayUpdateMessage(int messageId, String body) {
+        JsonProvider provider = JsonProvider.provider();
+
+        return provider.createObjectBuilder()
+                .add(
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.DISPLAY_MESSAGE_UPDATE.toString()
+                )
+                .add(
+                        AttributeEnum.MESSAGE_ID.toString(),
+                        messageId
+                )
+                .add(
+                        AttributeEnum.BODY.toString(),
+                        body
+                )
+                .build();
+    }
+
     public JsonObject generateDisplayUserJson(ChatSessionUser user) {
         JsonProvider provider = JsonProvider.provider();
 
@@ -224,6 +243,36 @@ public class ChatMessageJsonEncoder {
                 .add(
                         AttributeEnum.CHAT_SESSION_NAME.toString(),
                         chatSessionName
+                )
+                .build();
+    }
+
+    public JsonObject generateSetChatSessionId(int chatSessionId) {
+        JsonProvider provider = JsonProvider.provider();
+
+        return provider.createObjectBuilder()
+                .add(
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.SET_CHAT_SESSION_ID.toString()
+                )
+                .add(
+                        AttributeEnum.CHAT_SESSION_ID.toString(),
+                        chatSessionId
+                )
+                .build();
+    }
+
+    public JsonObject generateRemoveChatSessionFromDisplay(int chatSessionId) {
+        JsonProvider provider = JsonProvider.provider();
+
+        return provider.createObjectBuilder()
+                .add(
+                        ServerActionEnum.ACTION.toString(),
+                        ClientActionEnum.REMOVE_CHAT_SESSION.toString()
+                )
+                .add(
+                        AttributeEnum.CHAT_SESSION_ID.toString(),
+                        chatSessionId
                 )
                 .build();
     }

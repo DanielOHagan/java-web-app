@@ -53,14 +53,6 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
         MessageDAOImpl messageDAO = new MessageDAOImpl();
 
         try (Connection connection = DataSource.getConnection()) {
-            //Remove Chat Session
-            deleteRowsByCondition(
-                    connection,
-                    CHAT_SESSION_TABLE_NAME,
-                    CHAT_SESSION_ID_COLUMN_NAME,
-                    sessionId
-            );
-
             //Remove Messages
             messageDAO.deleteMessageBySession(sessionId);
 
@@ -69,6 +61,14 @@ public class ChatSessionDAOImpl implements IChatSessionDAO {
                     connection,
                     LINK_TABLE_NAME,
                     LINK_CHAT_SESSION_ID_COLUMN_NAME,
+                    sessionId
+            );
+
+            //Remove Chat Session
+            deleteRowsByCondition(
+                    connection,
+                    CHAT_SESSION_TABLE_NAME,
+                    CHAT_SESSION_ID_COLUMN_NAME,
                     sessionId
             );
         } catch (SQLException e) {

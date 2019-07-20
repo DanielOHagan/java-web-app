@@ -6,11 +6,13 @@ import com.danielohagan.webapp.businesslayer.entities.chat.ChatSession;
 import com.danielohagan.webapp.datalayer.dao.implementations.ChatSessionDAOImpl;
 import com.danielohagan.webapp.utils.Random;
 
+import javax.json.JsonObject;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @ServerEndpoint(value = "/chat")
@@ -18,13 +20,13 @@ public class UserChatEndpoint {
 
     private static final Map<Integer, ChatSessionHandler> mChatSessionMap = new HashMap<>();
 
-    //private ChatSessionHandler mChatSessionHandler = new ChatSessionHandler();
     private ChatSessionDAOImpl mChatSessionDAO = new ChatSessionDAOImpl();
 
     @OnOpen
     public void onOpen(Session session) {
         if (session != null) {
             System.out.println("Socket Open: " + session.getId());
+
         } else {
             System.out.println("Socket Open: UNKNOWN SESSION");
         }
@@ -32,17 +34,23 @@ public class UserChatEndpoint {
 
     @OnMessage
     public String onMessage(String message, Session session) {
-        if (session != null) {
+        if (session != null && message != null) {
             ChatMessageJsonDecoder chatMessageJsonDecoder = new ChatMessageJsonDecoder();
-            System.out.println("Socket: " + session.getId() + " -- Received Message: " + message);
-
             ServerActionEnum action = chatMessageJsonDecoder.decodeMessageAction(message);
             Integer chatSessionId = chatMessageJsonDecoder.getChatSessionId(message);
+            ChatSessionHandler chatSessionHandler = null;
+
+            System.out.println("Socket: " + session.getId() + " -- Received Message: " + message);
+
+            if (chatSessionId != null) {
+                chatSessionHandler = mChatSessionMap.get(chatSessionId);
+            }
 
             switch (action) {
                 //TODO:: Validation for EACH action
                 case INIT:
-                    initChatSession(message, session);
+                    Integer userId = chatMessageJsonDecoder.getUserId(message);
+                    initChatSession(chatSessionId, userId, session);
                     break;
                 case CLOSE:
                     closeSession(message, session);
@@ -52,55 +60,87 @@ public class UserChatEndpoint {
                     break;
 
                 case ADD_MESSAGE:
-                    mChatSessionMap.get(chatSessionId).addNewMessage(message);
+                    if (chatSessionHandler != null) {
+                        chatSessionHandler.addNewMessage(message);
+                    }
                     break;
                 case DELETE_MESSAGE:
-                    mChatSessionMap.get(chatSessionId).deleteMessage(message);
+                    if (chatSessionHandler != null) {
+                        chatSessionHandler.deleteMessage(message);
+                    }
                     break;
                 case EDIT_MESSAGE:
-                    mChatSessionMap.get(chatSessionId).editMessage(message, session);
+                    if (chatSessionHandler != null) {
+                        chatSessionHandler.editMessage(message, session);
+                    }
                     break;
                 case ADD_USER:
-                    mChatSessionMap.get(chatSessionId).addUser(message);
+                    if (chatSessionHandler != null) {
+                        chatSessionHandler.addUser(message);
+                    }
                     break;
                 case REMOVE_USER:
-                    mChatSessionMap.get(chatSessionId).removeUser(message);
+                    if (chatSessionHandler != null) {
+                        chatSessionHandler.removeUser(message);
+                    }
                     break;
                 case CHANGE_USER_PERMISSION:
-                    mChatSessionMap.get(chatSessionId).updateUserPermission(message);
+                    if (chatSessionHandler != null) {
+                        chatSessionHandler.updateUserPermission(message);
+                    }
                     break;
                 case CREATE_NEW_CHAT_SESSION:
                     Integer creatorId = chatMessageJsonDecoder.getUserId(message);
-                    createNewChatSession(creatorId, session);
+                    ChatSessionHandler csh = createNewChatSessionHandler(creatorId, session);
+
+                    if (csh != null) {
+                        initChatSession(csh.getChatSessionId(), creatorId, session);
+                        mChatSessionMap.get(csh.getChatSessionId()).sendSetChatSessionId(session);
+                    } else {
+                        //Send Error saying failed to create new Chat Session
+                    }
                     break;
                 case DELETE_CHAT_SESSION:
-                    mChatSessionMap.get(chatSessionId)
-                            .deleteChatSession(message, session);
+                    if (chatSessionHandler != null) {
+                        //If chat session is loaded
+                        chatSessionHandler
+                                .deleteChatSession(message, session);
+                    } else if (
+                            chatSessionId != null &&
+                            mChatSessionDAO.exists(chatSessionId)
+                    ){
+                        //If chat session is not loaded
+                        mChatSessionDAO.deleteSession(chatSessionId);
+                    }
 
                     mChatSessionMap.remove(chatSessionId);
                     break;
 
                 case INFO:
-//                System.out.println("INFO: " + getInfoMessage(message));
+//            System.out.println("INFO: " + chatMessageJsonDecoder.getInfoMessage(message));
                     break;
                 case ERROR:
-//                System.err.println("ERROR: " + getErrorMessage(message));
+//            System.err.println("ERROR: " + chatMessageJsonDecoder.getErrorMessage(message));
                     break;
 
                 case CLOSE_PREVIOUS_CHAT_SESSION:
-                    mChatSessionMap.get(chatSessionId).removeSession(session);
+                    if (chatSessionHandler != null) {
+                        chatSessionHandler.removeSession(session);
+                    }
                     break;
                 case NO_ACTION:
                     System.err.println("Message received but was given no action, or no action could be read.");
                     break;
                 case ACTION:
-                    //Since no action was specified, maybe log the message?
+                    //TODO:: Since no action was specified, maybe log the message?
                     break;
 
                 default:
                     System.err.println("Unrecognised action string: " + action.toString());
                     break;
             }
+        } else {
+            System.err.println("Session or message is NULL");
         }
 
         return message;
@@ -128,12 +168,9 @@ public class UserChatEndpoint {
         }
     }
 
-    private void initChatSession(String message, Session session) {
-        ChatMessageJsonDecoder chatMessageJsonDecoder = new ChatMessageJsonDecoder();
-        Integer chatSessionId = chatMessageJsonDecoder.getChatSessionId(message);
-        Integer userId = chatMessageJsonDecoder.getUserId(message);
-
+    private void initChatSession(Integer chatSessionId, Integer userId, Session session) {
         if (chatSessionId != null && userId != null) {
+            //Link Chat Session with websocket client session
             if (
                     mChatSessionDAO.exists(chatSessionId) &&
                     mChatSessionDAO.userIsInChatSession(userId, chatSessionId)
@@ -152,6 +189,7 @@ public class UserChatEndpoint {
         ChatMessageJsonDecoder chatMessageJsonDecoder = new ChatMessageJsonDecoder();
         Integer chatSessionId = chatMessageJsonDecoder.getChatSessionId(message);
 
+        //Remove session from Chat Session
         if (chatSessionId != null) {
             if (mChatSessionMap.get(chatSessionId) != null) {
                 mChatSessionMap.get(chatSessionId).removeSession(session);
@@ -159,7 +197,9 @@ public class UserChatEndpoint {
         }
     }
 
-    private void createNewChatSession(Integer creatorId, Session session) {
+    private ChatSessionHandler createNewChatSessionHandler(Integer creatorId, Session session) {
+        ChatSessionHandler chatSessionHandler = null;
+
         if (creatorId != null) {
             int chatSessionId = Random.generateRandomPositiveInt();
 
@@ -172,11 +212,27 @@ public class UserChatEndpoint {
                     "Chat Session: " + chatSessionId,
                     LocalDateTime.now()
             );
-            ChatSessionHandler chatSessionHandler = new ChatSessionHandler(chatSession);
+            chatSessionHandler = new ChatSessionHandler(chatSession);
             chatSessionHandler.addSession(session);
             chatSessionHandler.createChatSession(creatorId, session);
+        }
 
-            mChatSessionMap.put(chatSessionId, new ChatSessionHandler(chatSession));
+        return chatSessionHandler;
+    }
+
+    public void sendToAllSessions(JsonObject jsonObject, List<Session> sessionList) {
+        for (Session session : sessionList) {
+            sendToSession(session, jsonObject);
+        }
+    }
+
+    public void sendToSession(Session session, JsonObject jsonObject) {
+        try {
+            if (session != null && session.isOpen()) {
+                session.getBasicRemote().sendText(jsonObject.toString());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

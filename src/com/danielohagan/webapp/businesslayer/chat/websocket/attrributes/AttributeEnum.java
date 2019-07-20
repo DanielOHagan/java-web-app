@@ -4,7 +4,6 @@ public enum AttributeEnum implements IAttribute {
 
     ID("id"),
     BODY("body"),
-    CHAT_SESSION_ID("chatSessionId"),
     SENDER_ID("senderId"),
     CREATION_TIME("creationTime"),
 
@@ -14,6 +13,7 @@ public enum AttributeEnum implements IAttribute {
 
     SENDER_USERNAME("senderUsername"),
 
+    CHAT_SESSION_ID("chatSessionId"),
     CHAT_SESSION_NAME("chatSessionName"),
 
     USER_ID("userId"),

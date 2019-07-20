@@ -71,6 +71,7 @@ public class ChatSessionHandler {
         mUserDAO = new UserDAOImpl();
         mSessionList = new ArrayList<>();
         mChatMessageJsonEncoder = new ChatMessageJsonEncoder();
+        mChatMessageJsonDecoder = new ChatMessageJsonDecoder();
 
         mChatSession = chatSession;
     }
@@ -78,6 +79,11 @@ public class ChatSessionHandler {
     public void createChatSession(Integer creatorId, Session session) {
         //Store in database
         mChatSessionDAO.createNewSession(mChatSession, creatorId);
+
+        //Add user list
+        mChatSession.getUserList().addAll(
+                mChatSessionDAO.getUserListBySession(CHAT_SESSION_ID)
+        );
 
         //Add Chat Session to client's Chat Session list
         sendAddNewChatSession(session);
@@ -101,6 +107,7 @@ public class ChatSessionHandler {
         ErrorResponse errorResponse = addUserGetErrors(userId, newUserId);
 
         if (!errorResponse.hasError()) {
+            //Add to DB
             mChatSessionDAO.addUserToSession(
                     CHAT_SESSION_ID,
                     newUserId,
@@ -113,6 +120,10 @@ public class ChatSessionHandler {
                     ChatPermissionLevel.MEMBER
             );
 
+            //Add to memory
+            mChatSession.getUserList().add(chatSessionUser);
+
+            //Tell clients to display new User
             sendToAllSessions(
                     mChatMessageJsonEncoder.generateDisplayUserJson(chatSessionUser)
             );
@@ -145,6 +156,8 @@ public class ChatSessionHandler {
 
     public void updateUserPermission(String message) {
         //TODO:: This
+
+        //TODO:: Update ChatSession.mUserList item
     }
 
     /**
@@ -293,16 +306,17 @@ public class ChatSessionHandler {
             cleanUp();
         } else {
             //Send Error response
+            sendErrorResponse(session, errorResponse);
         }
     }
 
     private void sendDeleteChatSession() {
         //Tell Sessions to remove chat Session
-
-        //TODO::
-
-//        JsonObject removeChatSessionJson = mChatMessageJsonEncoder.generateRemoveChatSessionJson(sessionId);
-//        sendToAllSessions(removeChatSessionJson);
+        sendToAllSessions(
+                mChatMessageJsonEncoder.generateRemoveChatSessionFromDisplay(
+                        CHAT_SESSION_ID
+                )
+        );
     }
 
     private void sendAddNewChatSession(Session session) {
@@ -368,6 +382,10 @@ public class ChatSessionHandler {
         return true;
     }
 
+    public void sendErrorResponse(Session session, ErrorResponse errorResponse) {
+        //TODO:: THIS
+    }
+
     public void sendError(Session session, IErrorType error) {
         //TODO:: THIS
     }
@@ -403,12 +421,12 @@ public class ChatSessionHandler {
     }
 
     private void sendDisplayUpdateMessageBody(int messageId, String messageBody) {
-//        sendToAllSessions(
-//                mChatMessageJsonEncoder.generateDisplayUpdateMessageJson(
-//                        messageId,
-//                        messageBody
-//                )
-//        );
+        sendToAllSessions(
+                mChatMessageJsonEncoder.generateDisplayUpdateMessage(
+                        messageId,
+                        messageBody
+                )
+        );
     }
 
     private void sendDisplayMessagesToSession(
@@ -632,6 +650,17 @@ public class ChatSessionHandler {
         }
 
         return errorResponse;
+    }
+
+    public void sendSetChatSessionId(Session session) {
+        sendToSession(
+                session,
+                mChatMessageJsonEncoder.generateSetChatSessionId(CHAT_SESSION_ID)
+        );
+    }
+
+    public int getChatSessionId() {
+        return CHAT_SESSION_ID;
     }
 
     public void cleanUp() {

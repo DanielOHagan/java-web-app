@@ -1,3 +1,7 @@
 .selectable:hover {
     cursor: pointer;
 }
+
+li.chat-session {
+    max-width: 30%;
+}

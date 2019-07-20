@@ -73,18 +73,19 @@ class WebSocketClient {
     }
 
     send(message) {
-        if (this.webSocket.readyState === WebSocket.OPEN) {
-            this.webSocket.send(message);
-        } else {
+        if (this.webSocket.readyState !== WebSocket.OPEN) {
             console.error(
                 "webSocket is not open, readyState = " +
                 this.webSocket.readyState
             );
+        } else {
+            this.webSocket.send(message);
         }
     }
 
     disconnect() {
         if (this.webSocket.readyState === WebSocket.OPEN) {
+            this.sendCloseMessage();
             this.webSocket.close();
         } else {
             console.error(
@@ -182,7 +183,9 @@ function displayOldMessage(message) {
 function removeMessageFromDisplay(message) {
     var messageNode = document.getElementById(MESSAGE_PREFIX + message.messageId);
 
-    messageNode.parentNode.removeChild(messageNode);
+    if (messageNode !== null) {
+        messageNode.parentNode.removeChild(messageNode);
+    }
 }
 
 function displayUpdatedMessage(message) {
@@ -266,6 +269,9 @@ function decodeMessage(messageData) {
         case "clientRemoveChatSession":
             removeChatSessionFromDisplay(message);
             break;
+        case "clientSetChatSessionId":
+            setChatSessionId(message);
+            break;
 
         case "clientDisplayUser":
             displayChatUser(message);
@@ -279,6 +285,12 @@ function decodeMessage(messageData) {
 
         case "clientDisplaySessionName":
             displaySessionName(message);
+            break;
+
+        //Listing server-side actions to prevent
+        // them from triggering the switch default
+        case "heartBeat":
+        case "deleteChatSession":
             break;
 
         default:
@@ -343,11 +355,18 @@ function createNewChatSession() {
     }
 }
 
+function setChatSessionId(message) {
+    var id = message.chatSessionId;
+
+    if (id !== null) {
+        client.chatSessionId = id;
+    }
+}
+
 function addNewUser() {
     var targetUserId = prompt("Input new User ID", "-1");
 
     if (targetUserId !== "-1") {
-
         var id = parseInt(targetUserId);
 
         if (!isNaN(id)) {
@@ -391,7 +410,9 @@ function displayChatUser(message) {
 function removeUserFromDisplay(message) {
     if (client !== null && client.isOpen()) {
         if (message.chatSessionId === client.chatSessionId) {
-            var listItemNode = document.getElementById(SESSION_USER_PREFIX + message.targetUserId);
+            var listItemNode = document.getElementById(
+                SESSION_USER_PREFIX + message.targetUserId
+            );
 
             if (listItemNode !== null) {
                 listItemNode.parentNode.removeChild(listItemNode);
@@ -417,6 +438,7 @@ function addChatSessionToDisplay(message) {
 
     var listItemBodyTag = document.createElement("p");
     listItemBodyTag.innerHTML = message.chatSessionName;
+    chatSessionListItem.appendChild(listItemBodyTag);
 
     chatSessionListNode.appendChild(chatSessionListItem);
 }
@@ -430,14 +452,14 @@ function displaySessionName(message) {
 }
 
 function removeChatSessionFromDisplay(message) {
-    var chatSessionId = message.chatSessionId;
-
-    if (client.chatSessionId === chatSessionId) {
+    if (client.chatSessionId === message.chatSessionId) {
         client.resetChatSession();
         clearChatSessionDisplay();
     }
 
-    var chatSessionListItem = document.getElementById(SESSION_PREFIX + chatSessionId);
+    var chatSessionListItem = document.getElementById(
+        SESSION_PREFIX + message.chatSessionId
+    );
 
     if (chatSessionListItem !== null) {
         chatSessionListItem.parentNode.removeChild(chatSessionListItem);
