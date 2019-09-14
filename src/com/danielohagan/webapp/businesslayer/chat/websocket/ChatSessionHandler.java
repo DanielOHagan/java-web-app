@@ -115,7 +115,7 @@ public class ChatSessionHandler {
             );
 
             ChatSessionUser chatSessionUser = new ChatSessionUser(
-                    new UserDAOImpl().getById(newUserId),
+                    mUserDAO.getById(newUserId),
                     CHAT_SESSION_ID,
                     ChatPermissionLevel.MEMBER
             );
